@@ -1,6 +1,16 @@
 /* R2PRO — sample data. Replace with API calls when the backend exists. */
 window.R2 = (function(){
 
+  var PLAYER = {
+    name:     "Adrian Silva da Costa",
+    initials: "ASC",
+    email:    "asccur@gmail.com",
+    squad:    "Squad A",
+    days:     "Tuesday & Thursday",
+    coach:    "Coach Rafa",
+    first:    "Adrian"
+  };
+
   var COACHES = [
     {i:"RM", n:"Rafa Montoya",    r:"Head coach",         b:"Former WPT qualifier, 12 years coaching. Runs the squad programme and the level assessments.", t:["Squad","Tactics","Video review"], l:"ES · EN · PAP"},
     {i:"YP", n:"Yaritza Pieters", r:"Fitness & kids",     b:"Sports scientist. Builds the conditioning blocks and leads the Kids Academy mornings.", t:["Kids 5-12","Fitness"], l:"PAP · NL · EN"},
@@ -20,7 +30,7 @@ window.R2 = (function(){
     {n:"Chiquita",       es:"low ball to the feet",  v:5.6, d:0,   by:"RM", on:"2 Sep"},
     {n:"Positioning",    es:"posicionamiento",       v:7.4, d:0.5, by:"RM", on:"2 Sep"},
     {n:"Serve & return", es:"saque y resto",         v:6.0, d:0.4, by:"YP", on:"2 Sep"},
-    {n:"Movement",       es:"fitness & footwork",    v:7.8, d:0.6, by:"YP", on:"9 Jun"},
+    {n:"Agility",        es:"footwork & speed",      v:7.8, d:0.6, by:"YP", on:"9 Jun"},
     {n:"Match head",     es:"decision making",       v:5.2, d:0.2, by:"RM", on:"2 Sep"}
   ];
 
@@ -72,5 +82,20 @@ window.R2 = (function(){
   /* 1 = attended, weeks 1 to 12 of the season */
   var ATT = [1,1,0,1,1,1,1,0,1,1,1,1];
 
-  return {COACHES:COACHES, SKILLS:SKILLS, RADAR:RADAR, SHOP:SHOP, DRILLS:DRILLS, FEED:FEED, HISTORY:HISTORY, ATT:ATT};
+
+  /* Where each skill lives on the body. Drawn by app.js as the second slide
+     of the skill profile card. Geometry is in the 0 0 360 314 viewBox.
+     dot = where the marker sits, ly = the label's baseline, side = which column. */
+  var BODY = [
+    {k:"Match head",  v:5.2, side:"l", ly:44,  dot:[142,52],  seg:"head"},
+    {k:"Volley",      v:6.8, side:"l", ly:156, dot:[114,152], seg:"offarm"},
+    {k:"Serve",       v:6.0, side:"r", ly:20,  dot:[242,20],  seg:"racket"},
+    {k:"Víbora",      v:4.9, side:"r", ly:52,  dot:[222,47],  seg:"forearm"},
+    {k:"Bandeja",     v:6.4, side:"r", ly:86,  dot:[199,70],  seg:"uparm"},
+    {k:"Positioning", v:7.4, side:"r", ly:128, dot:[172,124], seg:"torso"},
+    {k:"Agility",     v:7.8, side:"r", ly:196, dot:[177,196], seg:"thighs"},
+    {k:"Wall exit",   v:7.1, side:"r", ly:252, dot:[182,246], seg:"shins"}
+  ];
+
+  return {PLAYER:PLAYER, BODY:BODY, COACHES:COACHES, SKILLS:SKILLS, RADAR:RADAR, SHOP:SHOP, DRILLS:DRILLS, FEED:FEED, HISTORY:HISTORY, ATT:ATT};
 })();

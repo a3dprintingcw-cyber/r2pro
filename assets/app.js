@@ -105,14 +105,24 @@
     $("#attChart").innerHTML = s;
   })();
 
-  /* ---------- radar ---------- */
+  /* ---------- skill profile: slide 1 radar, slide 2 body map ---------- */
+  var MONO = 'IBM Plex Mono, monospace';
+
+  /* score bands. Semantic, not the brand accent. */
+  function band(v){
+    if(v < 5.5) return {c:"#FF5A5A", t:"needs work"};
+    if(v < 7.0) return {c:"#FFC24B", t:"solid"};
+    return {c:"#5BD98A", t:"strong"};
+  }
+
   (function radar(){
-    var R = D.RADAR, cx = 160, cy = 142, rad = 96, n = R.length;
+    var R = D.RADAR, cx = 180, cy = 142, rad = 96, n = R.length;
     function pt(i, val){
       var a = -Math.PI/2 + i*2*Math.PI/n, r = rad*(val/10);
       return [cx + r*Math.cos(a), cy + r*Math.sin(a)];
     }
-    var s = '<svg viewBox="0 0 320 314" width="100%" role="img" aria-label="Skill radar comparing the player with the squad average">';
+    var s = '<svg viewBox="0 0 360 314" width="100%" role="img" aria-label="Skill radar comparing ' +
+            D.PLAYER.first + ' with the squad average">';
     [2.5,5,7.5,10].forEach(function(g){
       var p = []; for(var i=0;i<n;i++) p.push(pt(i,g).join(","));
       s += '<polygon points="'+p.join(" ")+'" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1"/>';
@@ -132,13 +142,93 @@
       s += '<circle cx="'+d[0]+'" cy="'+d[1]+'" r="3.4" fill="#FF6B4A"/>';
       var l = pt(j, 12.3);
       var anchor = l[0] > cx+6 ? "start" : (l[0] < cx-6 ? "end" : "middle");
-      s += '<text x="'+l[0]+'" y="'+(l[1]+3.5)+'" font-size="11" font-family="IBM Plex Mono, monospace" fill="#8FA6BC" text-anchor="'+anchor+'">'+R[j].k+'</text>';
+      s += '<text x="'+l[0]+'" y="'+(l[1]+3.5)+'" font-size="11" font-family="'+MONO+'" fill="#8FA6BC" text-anchor="'+anchor+'">'+R[j].k+'</text>';
     }
-    s += '<g font-size="11" font-family="IBM Plex Mono, monospace">'+
-         '<rect x="18" y="294" width="10" height="10" rx="2" fill="#FF6B4A"/><text x="34" y="303" fill="#EAF2F8">Miguel</text>'+
-         '<rect x="110" y="294" width="10" height="10" rx="2" fill="rgba(143,166,188,.55)"/><text x="126" y="303" fill="#8FA6BC">Squad average</text>'+
+    s += '<g font-size="11" font-family="'+MONO+'">'+
+         '<rect x="38" y="294" width="10" height="10" rx="2" fill="#FF6B4A"/><text x="54" y="303" fill="#EAF2F8">'+D.PLAYER.first+'</text>'+
+         '<rect x="140" y="294" width="10" height="10" rx="2" fill="rgba(143,166,188,.55)"/><text x="156" y="303" fill="#8FA6BC">Squad average</text>'+
          '</g></svg>';
     $("#radar").innerHTML = s;
+  })();
+
+  (function bodyMap(){
+    var col = {};
+    D.BODY.forEach(function(b){ col[b.seg] = band(b.v).c; });
+
+    function limb(d, c, w){
+      return '<path d="'+d+'" fill="none" stroke="'+c+'" stroke-width="'+(w||9)+
+             '" stroke-linecap="round" stroke-linejoin="round"/>';
+    }
+    var s = '<svg viewBox="0 0 360 314" width="100%" role="img" aria-label="Body map: each rating placed where the shot is played from">';
+
+    /* faint silhouette underneath, so uncoloured parts still read as a body */
+    s += '<g stroke="rgba(255,255,255,.07)" stroke-width="11" stroke-linecap="round" fill="none">'+
+         '<path d="M160 67 L160 80"/>'+
+         '</g>';
+
+    /* torso */
+    s += '<path d="M134 80 L186 80 L178 168 L142 168 Z" fill="'+col.torso+'" fill-opacity=".16" stroke="'+col.torso+'" stroke-width="2" stroke-linejoin="round"/>';
+    /* neck */
+    s += limb("M160 66 L160 81", "rgba(255,255,255,.22)", 9);
+    /* head */
+    s += '<circle cx="160" cy="48" r="19" fill="'+col.head+'" fill-opacity=".16" stroke="'+col.head+'" stroke-width="2.4"/>';
+    /* racket arm */
+    s += limb("M186 82 L212 58", col.uparm);
+    s += limb("M212 58 L232 36", col.forearm);
+    /* racket */
+    s += '<line x1="232" y1="36" x2="239" y2="28" stroke="'+col.racket+'" stroke-width="4" stroke-linecap="round"/>';
+    s += '<ellipse cx="245" cy="20" rx="10" ry="13" transform="rotate(-40 245 20)" fill="'+col.racket+'" fill-opacity=".16" stroke="'+col.racket+'" stroke-width="2.4"/>';
+    /* off arm */
+    s += limb("M134 82 L120 124 L114 152", col.offarm);
+    /* legs */
+    s += limb("M146 170 L140 220", col.thighs);
+    s += limb("M174 170 L180 220", col.thighs);
+    s += limb("M140 220 L136 266", col.shins);
+    s += limb("M180 220 L184 266", col.shins);
+    /* feet */
+    s += limb("M136 268 L124 273", "rgba(255,255,255,.22)", 7);
+    s += limb("M184 268 L196 273", "rgba(255,255,255,.22)", 7);
+
+    /* leaders, markers and labels */
+    D.BODY.forEach(function(b){
+      var bd = band(b.v);
+      var left = b.side === "l";
+      var lx = left ? 92 : 246;
+      var tip = left ? lx + 6 : lx - 6;
+      s += '<line x1="'+b.dot[0]+'" y1="'+b.dot[1]+'" x2="'+tip+'" y2="'+(b.ly-4)+'" stroke="rgba(255,255,255,.18)" stroke-width="1"/>';
+      s += '<circle cx="'+b.dot[0]+'" cy="'+b.dot[1]+'" r="3.6" fill="'+bd.c+'" stroke="#0F2233" stroke-width="1.5"/>';
+      s += '<text x="'+lx+'" y="'+b.ly+'" text-anchor="'+(left?"end":"start")+'" font-family="'+MONO+'" font-size="9.5" letter-spacing=".07em" fill="#8FA6BC">'+
+           b.k.toUpperCase()+'</text>';
+      s += '<text x="'+lx+'" y="'+(b.ly+16)+'" text-anchor="'+(left?"end":"start")+'" font-family="Anton, sans-serif" font-size="17" fill="'+bd.c+'">'+
+           b.v.toFixed(1)+'</text>';
+    });
+
+    s += '</svg>';
+    $("#bodymap").innerHTML = s;
+  })();
+
+  /* carousel: segmented buttons plus native swipe / trackpad scroll */
+  (function carousel(){
+    var strip = $("#pslides");
+    if(!strip) return;
+    var btns = Array.prototype.slice.call(document.querySelectorAll("[data-slide]"));
+    function mark(i){
+      btns.forEach(function(b){ b.classList.toggle("on", +b.dataset.slide === i); });
+    }
+    btns.forEach(function(b){
+      b.addEventListener("click", function(){
+        var i = +b.dataset.slide;
+        strip.scrollTo({left: i * strip.clientWidth, behavior: "smooth"});
+        mark(i);
+      });
+    });
+    var t;
+    strip.addEventListener("scroll", function(){
+      clearTimeout(t);
+      t = setTimeout(function(){
+        mark(Math.round(strip.scrollLeft / strip.clientWidth));
+      }, 90);
+    });
   })();
 
   /* ---------- skill cards ---------- */
@@ -214,7 +304,7 @@
       D.DRILLS[i].done = true;
       setPoints(points + 15);
       renderDrills();
-      window.r2toast(D.DRILLS[i].n + " logged. +15 points, Coach Rafa can see it.");
+      window.r2toast(D.DRILLS[i].n + " logged. +15 points, " + D.PLAYER.coach + " can see it.");
     }
   });
 
@@ -229,6 +319,15 @@
       '<button class="btn btn-primary btn-sm" data-toast="Private lesson request sent to '+c.n+'.">Book private</button>'+
       '<button class="btn btn-ghost btn-sm" data-go="home">See drills</button></div></div></div>';
   }).join("");
+
+  /* ---------- player identity ---------- */
+  (function identity(){
+    var P = D.PLAYER;
+    var av = $("#navAvatar");   if(av) av.textContent = P.initials;
+    var em = $("#sideEmail");   if(em) em.textContent = P.email;
+    var gr = $("#greeting");    if(gr) gr.textContent = "Bon bini, " + P.first;
+    var sq = $("#squadLine");   if(sq) sq.textContent = P.squad + " \u00b7 " + P.days + " \u00b7 " + P.coach;
+  })();
 
   /* ---------- boot ---------- */
   setPoints(points);

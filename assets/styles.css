@@ -328,3 +328,29 @@ section.band:last-of-type{border-bottom:0}
   .cprof{flex-direction:column}
   .page-head{padding-block:38px 32px}
 }
+
+/* ---------- skill profile carousel (radar <-> body map) ---------- */
+.pcarousel{position:relative}
+.pslides{
+  display:flex;overflow-x:auto;scroll-snap-type:x mandatory;
+  scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;
+}
+.pslides::-webkit-scrollbar{display:none}
+.pslide{flex:0 0 100%;min-width:0;scroll-snap-align:center}
+.pseg{display:flex;gap:3px;padding:3px;border:1px solid var(--line);border-radius:100px;background:rgba(255,255,255,.04)}
+.pseg button{
+  padding:5px 11px;border-radius:100px;font-family:var(--f-mono);
+  font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+}
+.pseg button:hover{color:var(--text)}
+.pseg button.on{background:var(--coral);color:#2A0B03;font-weight:600}
+.pfoot{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:10px;padding-top:10px;border-top:1px solid var(--line);
+  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
+}
+.scale{display:flex;gap:10px;flex-wrap:wrap}
+.scale span{display:flex;align-items:center;gap:5px}
+.scale i{width:8px;height:8px;border-radius:2px;display:block}
+.swipe{display:flex;align-items:center;gap:6px;white-space:nowrap}
+@media (max-width:680px){ .pfoot{flex-direction:column;align-items:flex-start;gap:8px} }
