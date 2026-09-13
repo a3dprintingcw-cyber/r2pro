@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R2PRO Coaches</title>
+<meta name="description" content="The eight coaches at R2PRO Padel Academy in Willemstad, Curacao.">
+<meta name="theme-color" content="#0A1622">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%8E%BE</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<header class="topbar">
+    <div class="wrap topbar-in">
+      <a class="brand" href="index.html"><svg class="court-glyph" viewBox="0 0 200 100" aria-hidden="true">
+        <rect x="2" y="2" width="196" height="96" fill="none" stroke="#FF6B4A" stroke-width="5"/>
+        <line x1="100" y1="2" x2="100" y2="98" stroke="#FF6B4A" stroke-width="5"/>
+        <line x1="40" y1="2" x2="40" y2="98" stroke="#FF6B4A" stroke-width="4"/>
+        <line x1="160" y1="2" x2="160" y2="98" stroke="#FF6B4A" stroke-width="4"/>
+      </svg><span><span class="r2">R2</span>PRO</span></a>
+      <nav class="topnav" id="topnav">
+        <a href="academies.html">Academies</a>
+        <a href="programs.html">Programs</a>
+        <a href="coaches.html" class="here">Coaches</a>
+        <a href="pricing.html">For clubs</a>
+        </nav>
+      <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+      </button>
+      <a class="btn btn-ghost btn-sm" href="app.html">Player login</a>
+    </div>
+  </header>
+  <section class="page-head">
+    <div class="wrap inner">
+      <div class="eyebrow">The team</div>
+      <h1>Meet the coaches</h1>
+      <p>Eight coaches at R2PRO. Every one of them has a profile in the player app, with the drills they have uploaded and a button to book a private lesson.</p>
+    </div>
+  </section>
+  <section class="band">
+    <div class="wrap">
+      <div class="grid g3" id="coachGrid"></div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <div class="band-head">
+        <div class="eyebrow">What coaches do in the app</div>
+        <h2>The coach side</h2>
+      </div>
+      <div class="grid g3">
+        <div class="acad"><h3>Attendance on court</h3><p>Open the squad, tap the players who showed up. Points and streaks update immediately.</p></div>
+        <div class="acad"><h3>Assessments</h3><p>Score each skill out of 10 every six weeks and leave a note the player reads in their file.</p></div>
+        <div class="acad"><h3>Upload drills</h3><p>Film a drill on the phone, set a level and the kit needed, publish it to the home training tab.</p></div>
+      </div>
+    </div>
+  </section>
+<footer>
+    <div class="wrap foot-in">
+      <a class="brand" href="index.html" style="font-size:16px"><span class="r2">R2</span>PRO</a>
+      <nav class="foot-nav">
+        <a href="academies.html">Academies</a>
+        <a href="programs.html">Programs</a>
+        <a href="coaches.html">Coaches</a>
+        <a href="pricing.html">For clubs</a>
+        <a href="app.html">Player app</a>
+      </nav>
+      <div class="mono" style="font-size:11.5px">Willemstad, Curaçao &middot; hello@r2pro.cw</div>
+    </div>
+  </footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="assets/data.js"></script>
+  <script src="assets/site.js"></script>
+  <script>
+    document.getElementById("coachGrid").innerHTML =
+      window.R2.COACHES.map(function(c,i){ return window.coachCard(c,i); }).join("");
+  </script>
+</body>
+</html>

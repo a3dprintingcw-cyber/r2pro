@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R2PRO Player App</title>
+<meta name="description" content="The R2PRO player app: dashboard, development stats, points and kantine, at-home training and the coaches.">
+<meta name="theme-color" content="#0A1622">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%8E%BE</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div class="proto">Prototype &middot; sample data</div>
+
+<header class="appbar">
+  <div class="appbar-in">
+    <a class="brand" href="index.html" style="font-size:18px"><span class="r2">R2</span>PRO</a>
+    <div class="switcher">
+      <button class="switch-btn" id="switchBtn" aria-expanded="false">
+        <span class="dot"></span><span id="acadName">R2PRO Padel Academy</span>
+        <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4.5L6 8.5L10 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+      <div class="switch-menu" id="switchMenu" hidden>
+        <button data-acad="R2PRO Padel Academy">R2PRO Padel Academy<span class="sub">Willemstad &middot; your academy</span></button>
+        <button data-acad="Padel Club Jan Thiel">Padel Club Jan Thiel<span class="sub">Jan Thiel &middot; no account yet</span></button>
+        <button data-acad="Bandabou Padel">Bandabou Padel<span class="sub">Westpunt &middot; no account yet</span></button>
+      </div>
+    </div>
+    <div class="pts-chip"><span id="ptsChip">1,340</span> pts</div>
+    <div class="avatar" style="width:34px;height:34px;font-size:13px" title="Miguel Jansen">MJ</div>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="side">
+    <nav id="sideNav"></nav>
+    <div class="side-foot">
+      Signed in with Google<br>miguel.jansen@gmail.com<br>
+      <a href="index.html" style="color:var(--coral);text-decoration:underline;display:inline-block;margin-top:6px">Sign out</a>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- ===== DASHBOARD ===== -->
+    <section class="view on" id="v-dash">
+      <div class="view-head">
+        <h2>Bon bini, Miguel</h2>
+        <p>Junior squad &middot; Tuesday &amp; Thursday &middot; Coach Rafa</p>
+      </div>
+
+      <div class="next" style="margin-bottom:16px">
+        <div>
+          <div class="eyebrow">Next session</div>
+          <div class="when">Tue 15 Sep &middot; 17:00</div>
+          <div class="meta">Court 3, Jan Thiel &middot; Squad training with Rafa &middot; bring the blue grip</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" data-toast="You're in. See you Tuesday at 17:00.">Confirm</button>
+          <button class="btn btn-ghost btn-sm" data-toast="Coach Rafa has been notified you can't make it.">Can't make it</button>
+        </div>
+      </div>
+
+      <div class="tiles" style="margin-bottom:16px">
+        <div class="tile rate"><div class="lab">R2 rating</div><div class="val">3.25</div><div class="delta">&uarr; 0.25 since July</div></div>
+        <div class="tile"><div class="lab">Sessions</div><div class="val">48 <small>this season</small></div><div class="delta">&uarr; 6 this month</div></div>
+        <div class="tile streak"><div class="lab">Streak</div><div class="val">11 <small>in a row</small></div><div class="delta">Best: 14</div></div>
+        <div class="tile pts"><div class="lab">R2 points</div><div class="val" id="ptsTile">1,340</div><div class="delta">&uarr; 260 this month</div></div>
+      </div>
+
+      <div class="two">
+        <div class="card">
+          <div class="card-hd"><h3>Attendance, last 12 weeks</h3><span class="chip">92%</span></div>
+          <div id="attChart"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3>Recent activity</h3></div>
+          <div class="feed" id="feed"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== DEVELOPMENT ===== -->
+    <section class="view" id="v-dev">
+      <div class="view-head">
+        <h2>Player development</h2>
+        <p>Scored by your coach every six weeks. Last assessment: 2 September by Rafa Montoya.</p>
+      </div>
+
+      <div class="two" style="margin-bottom:16px">
+        <div class="card">
+          <div class="card-hd"><h3>Skill profile</h3><span class="chip sea">vs. squad average</span></div>
+          <div id="radar"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3>Coach notes</h3></div>
+          <div class="note"><p>Bandeja is landing deep now, keep the racket face open on the follow through. Next block we work on the v&iacute;bora so you stop giving the net back.</p><div class="by">Rafa Montoya &middot; 2 Sep</div></div>
+          <div class="note"><p>Much calmer on wall exits. Still rushing the chiquita when under pressure: slow feet, low bounce.</p><div class="by">Rafa Montoya &middot; 21 Jul</div></div>
+          <div class="note"><p>Fitness block done. Lateral movement improved, good work in camp week.</p><div class="by">Yaritza Pieters &middot; 9 Jun</div></div>
+        </div>
+      </div>
+
+      <div class="card-hd"><h3 style="font-size:14px">Skills, scored out of 10</h3></div>
+      <div class="skills" id="skills"></div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-hd"><h3>Level progression</h3><span class="chip ochre">Next: 3.50</span></div>
+        <div class="prow" style="margin-bottom:8px"><span>7 more squad sessions and a v&iacute;bora score of 6.0 unlocks level 3.50</span><b style="color:var(--coral)">3.25 / 3.50</b></div>
+        <div class="track" style="height:8px"><i style="width:65%;background:linear-gradient(90deg,var(--sea),var(--coral))"></i></div>
+      </div>
+    </section>
+
+    <!-- ===== POINTS ===== -->
+    <section class="view" id="v-pts">
+      <div class="view-head">
+        <h2>Points &amp; kantine</h2>
+        <p>Earn points on court, spend them at the bar. Show the code to the staff and they confirm it in seconds.</p>
+      </div>
+
+      <div class="balance" style="margin-bottom:18px">
+        <div>
+          <div class="lab">Your balance</div>
+          <div class="big" id="ptsBig">1,340</div>
+          <div class="mono" style="font-size:12px;color:var(--muted);margin-top:6px">260 earned this month &middot; none expiring</div>
+        </div>
+        <div style="max-width:400px">
+          <div class="lab" style="margin-bottom:9px">How you earn</div>
+          <div class="earn">
+            <span class="chip ochre">Training +50</span>
+            <span class="chip ochre">On time +10</span>
+            <span class="chip ochre">Camp day +100</span>
+            <span class="chip ochre">Home drill +15</span>
+            <span class="chip ochre">Bring a friend +150</span>
+            <span class="chip ochre">Club tournament +200</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-hd"><h3 style="font-size:14px">Kantine</h3><span class="chip">Prices in points</span></div>
+      <div class="shop" id="shop"></div>
+
+      <div class="card" style="margin-top:18px">
+        <div class="card-hd"><h3>Redemption history</h3></div>
+        <div class="feed" id="history"></div>
+      </div>
+    </section>
+
+    <!-- ===== HOME TRAINING ===== -->
+    <section class="view" id="v-home">
+      <div class="view-head">
+        <h2>At-home training</h2>
+        <p>Drills your coaches film and upload. Mark one complete and it lands in your development file, plus 15 points.</p>
+      </div>
+
+      <div class="filters" id="filters"></div>
+      <div class="drills" id="drills"></div>
+
+      <div class="card" style="margin-top:18px">
+        <div class="card-hd"><h3>This week's assignment</h3><span class="chip sea">from Coach Rafa</span></div>
+        <p style="font-size:13.5px;color:var(--muted)">Three sessions before Thursday: wall control, shadow bandeja and the mobility routine. Complete all three and you get a 50 point bonus on top.</p>
+      </div>
+    </section>
+
+    <!-- ===== COACHES ===== -->
+    <section class="view" id="v-coach">
+      <div class="view-head">
+        <h2>Meet the coaches</h2>
+        <p>Eight coaches at R2PRO. Book a private lesson or jump to the drills they have uploaded.</p>
+      </div>
+      <div class="cgrid" id="coachList"></div>
+    </section>
+
+  </main>
+</div>
+
+<div class="tabbar"><nav id="tabNav"></nav></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/data.js"></script>
+<script src="assets/site.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
