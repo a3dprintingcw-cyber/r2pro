@@ -112,7 +112,7 @@
       var a = -Math.PI/2 + i*2*Math.PI/n, r = rad*(val/10);
       return [cx + r*Math.cos(a), cy + r*Math.sin(a)];
     }
-    var s = '<svg viewBox="0 0 320 290" width="100%" role="img" aria-label="Skill radar comparing the player with the squad average">';
+    var s = '<svg viewBox="0 0 320 314" width="100%" role="img" aria-label="Skill radar comparing the player with the squad average">';
     [2.5,5,7.5,10].forEach(function(g){
       var p = []; for(var i=0;i<n;i++) p.push(pt(i,g).join(","));
       s += '<polygon points="'+p.join(" ")+'" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1"/>';
@@ -135,8 +135,8 @@
       s += '<text x="'+l[0]+'" y="'+(l[1]+3.5)+'" font-size="11" font-family="IBM Plex Mono, monospace" fill="#8FA6BC" text-anchor="'+anchor+'">'+R[j].k+'</text>';
     }
     s += '<g font-size="11" font-family="IBM Plex Mono, monospace">'+
-         '<rect x="18" y="262" width="10" height="10" rx="2" fill="#FF6B4A"/><text x="34" y="271" fill="#EAF2F8">Miguel</text>'+
-         '<rect x="110" y="262" width="10" height="10" rx="2" fill="rgba(143,166,188,.55)"/><text x="126" y="271" fill="#8FA6BC">Squad average</text>'+
+         '<rect x="18" y="294" width="10" height="10" rx="2" fill="#FF6B4A"/><text x="34" y="303" fill="#EAF2F8">Miguel</text>'+
+         '<rect x="110" y="294" width="10" height="10" rx="2" fill="rgba(143,166,188,.55)"/><text x="126" y="303" fill="#8FA6BC">Squad average</text>'+
          '</g></svg>';
     $("#radar").innerHTML = s;
   })();
