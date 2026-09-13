@@ -31,7 +31,7 @@
       </div>
     </div>
     <div class="pts-chip"><span id="ptsChip">1,340</span> pts</div>
-    <div class="avatar" style="width:34px;height:34px;font-size:13px" title="Miguel Jansen">MJ</div>
+    <div class="avatar" id="navAvatar" style="width:34px;height:34px;font-size:13px"></div>
   </div>
 </header>
 
@@ -39,7 +39,7 @@
   <aside class="side">
     <nav id="sideNav"></nav>
     <div class="side-foot">
-      Signed in with Google<br>miguel.jansen@gmail.com<br>
+      Signed in with Google<br><span id="sideEmail"></span><br>
       <a href="index.html" style="color:var(--coral);text-decoration:underline;display:inline-block;margin-top:6px">Sign out</a>
     </div>
   </aside>
@@ -49,8 +49,8 @@
     <!-- ===== DASHBOARD ===== -->
     <section class="view on" id="v-dash">
       <div class="view-head">
-        <h2>Bon bini, Miguel</h2>
-        <p>Junior squad &middot; Tuesday &amp; Thursday &middot; Coach Rafa</p>
+        <h2 id="greeting">Bon bini</h2>
+        <p id="squadLine"></p>
       </div>
 
       <div class="next" style="margin-bottom:16px">
@@ -93,8 +93,30 @@
 
       <div class="two" style="margin-bottom:16px">
         <div class="card">
-          <div class="card-hd"><h3>Skill profile</h3><span class="chip sea">vs. squad average</span></div>
-          <div id="radar"></div>
+          <div class="card-hd">
+            <h3>Skill profile</h3>
+            <div class="pseg">
+              <button data-slide="0" class="on">Hexagon</button>
+              <button data-slide="1">Body map</button>
+            </div>
+          </div>
+          <div class="pcarousel">
+            <div class="pslides" id="pslides">
+              <div class="pslide" id="radar"></div>
+              <div class="pslide" id="bodymap"></div>
+            </div>
+          </div>
+          <div class="pfoot">
+            <div class="scale">
+              <span><i style="background:#FF5A5A"></i>under 5.5</span>
+              <span><i style="background:#FFC24B"></i>5.5 to 7</span>
+              <span><i style="background:#5BD98A"></i>over 7</span>
+            </div>
+            <div class="swipe">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3L2 8l4 5M10 3l4 5-4 5"/></svg>
+              swipe to switch
+            </div>
+          </div>
         </div>
         <div class="card">
           <div class="card-hd"><h3>Coach notes</h3></div>
