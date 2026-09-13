@@ -87,10 +87,10 @@ window.R2 = (function(){
      of the skill profile card. Geometry is in the 0 0 360 314 viewBox.
      dot = where the marker sits, ly = the label's baseline, side = which column. */
   var BODY = [
-    {k:"Match head",  v:5.2, side:"l", ly:44,  dot:[142,52],  seg:"head"},
-    {k:"Volley",      v:6.8, side:"l", ly:156, dot:[114,152], seg:"offarm"},
-    {k:"Serve",       v:6.0, side:"r", ly:20,  dot:[242,20],  seg:"racket"},
-    {k:"Víbora",      v:4.9, side:"r", ly:52,  dot:[222,47],  seg:"forearm"},
+    {k:"Match head",  v:5.2, side:"l", ly:70,  dot:[142,52],  seg:"head"},
+    {k:"Volley",      v:6.8, side:"l", ly:158, dot:[114,152], seg:"offarm"},
+    {k:"Serve",       v:6.0, side:"l", ly:22,  dot:[240,13],  seg:"racket"},
+    {k:"Víbora",      v:4.9, side:"r", ly:48,  dot:[222,47],  seg:"forearm"},
     {k:"Bandeja",     v:6.4, side:"r", ly:86,  dot:[199,70],  seg:"uparm"},
     {k:"Positioning", v:7.4, side:"r", ly:128, dot:[172,124], seg:"torso"},
     {k:"Agility",     v:7.8, side:"r", ly:196, dot:[177,196], seg:"thighs"},
