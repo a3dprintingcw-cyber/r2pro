@@ -3,10 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>R2PRO Club Pricing</title>
-<meta name="description" content="Licence R2PRO for your own padel academy. Plans, limits and common questions.">
+<title>Club licence pricing | R2PRO</title>
+<meta name="description" content="What it costs to run your padel academy on R2PRO. Starter, Academy and Multi-club plans, billed monthly or yearly.">
 <meta name="theme-color" content="#0A1622">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%8E%BE</text></svg>">
+<link rel="canonical" href="https://a3dprintingcw-cyber.github.io/r2pro/pricing.html">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="R2PRO">
+<meta property="og:title" content="Club licence pricing | R2PRO">
+<meta property="og:description" content="What it costs to run your padel academy on R2PRO. Starter, Academy and Multi-club plans, billed monthly or yearly.">
+<meta property="og:url" content="https://a3dprintingcw-cyber.github.io/r2pro/pricing.html">
+<meta property="og:image" content="https://a3dprintingcw-cyber.github.io/r2pro/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -42,10 +55,21 @@
   </section>
   <section class="band">
     <div class="wrap">
+      <div class="pricebar">
+        <div class="seg" role="group" aria-label="Billing period">
+          <button data-bill="month" class="on">Monthly</button>
+          <button data-bill="year">Yearly, 2 months free</button>
+        </div>
+        <div class="seg" role="group" aria-label="Currency">
+          <button data-cur="XCG" class="on">XCG</button>
+          <button data-cur="USD">USD</button>
+          <button data-cur="EUR">EUR</button>
+        </div>
+      </div>
       <div class="grid g3">
         <div class="plan">
           <h3>Starter</h3>
-          <div class="amt">249 <small>ANG / month</small></div>
+          <div class="amt" data-xcg="249"><span class="amt-val">249</span> <small class="amt-cur">XCG / month</small></div>
           <ul>
             <li>Up to 75 player accounts</li>
             <li>3 coach accounts</li>
@@ -58,7 +82,7 @@
         <div class="plan pick">
           <span class="tag" style="align-self:flex-start;color:var(--coral);border-color:rgba(255,107,74,.4)">Most academies</span>
           <h3>Academy</h3>
-          <div class="amt">449 <small>ANG / month</small></div>
+          <div class="amt" data-xcg="449"><span class="amt-val">449</span> <small class="amt-cur">XCG / month</small></div>
           <ul>
             <li>Up to 300 player accounts</li>
             <li>Unlimited coach accounts</li>
@@ -71,7 +95,7 @@
         </div>
         <div class="plan">
           <h3>Multi-club</h3>
-          <div class="amt">899 <small>ANG / month</small></div>
+          <div class="amt" data-xcg="899"><span class="amt-val">899</span> <small class="amt-cur">XCG / month</small></div>
           <ul>
             <li>Unlimited players</li>
             <li>Several locations under one club</li>
@@ -82,7 +106,8 @@
           <button class="btn btn-ghost" data-toast="Thanks. We'll get back to you about the Multi-club plan.">Request a demo</button>
         </div>
       </div>
-      <p class="mono" style="font-size:12px;color:var(--muted);margin-top:18px">Prices exclude OB. Player subscriptions and kantine payments stay yours, R2PRO takes no cut.</p>
+      <p class="mono" id="billNote" style="font-size:12px;color:var(--muted);margin-top:18px"></p>
+      <p class="mono" style="font-size:12px;color:var(--muted);margin-top:6px">Player subscriptions and kantine payments stay yours, R2PRO takes no cut.</p>
     </div>
   </section>
 
@@ -118,11 +143,12 @@
         <a href="pricing.html">For clubs</a>
         <a href="app.html">Player app</a>
       </nav>
-      <div class="mono" style="font-size:11.5px">Willemstad, Curaçao &middot; hello@r2pro.cw</div>
+      <div class="mono" style="font-size:11.5px">Willemstad, Cura&ccedil;ao &middot; hello@r2pro.cw &middot; <span id="year"></span></div>
     </div>
   </footer>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="assets/data.js"></script>
   <script src="assets/site.js"></script>
+  <script src="assets/pricing.js"></script>
 </body>
 </html>

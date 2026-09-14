@@ -2,36 +2,52 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>R2PRO Player App</title>
-<meta name="description" content="The R2PRO player app: dashboard, development stats, points and kantine, at-home training and the coaches.">
+<meta name="description" content="The R2PRO player app: schedule, development stats, points and kantine, at-home training, squad standings and coach tools.">
 <meta name="theme-color" content="#0A1622">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%8E%BE</text></svg>">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="assets/styles.css">
 </head>
-<body>
+<body class="app-body">
 
-<div class="proto">Prototype &middot; sample data</div>
+<a class="skip" href="#mainStart">Skip to content</a>
+
+<div class="proto">Prototype, sample data. Everything you change is saved on this device.</div>
+<div class="netbar" id="netbar" hidden></div>
 
 <header class="appbar">
   <div class="appbar-in">
-    <a class="brand" href="index.html" style="font-size:18px"><span class="r2">R2</span>PRO</a>
+    <a class="brand" href="index.html"><span class="r2">R2</span>PRO</a>
+
     <div class="switcher">
       <button class="switch-btn" id="switchBtn" aria-expanded="false">
         <span class="dot"></span><span id="acadName">R2PRO Padel Academy</span>
         <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4.5L6 8.5L10 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       </button>
       <div class="switch-menu" id="switchMenu" hidden>
-        <button data-acad="R2PRO Padel Academy">R2PRO Padel Academy<span class="sub">Willemstad &middot; your academy</span></button>
-        <button data-acad="Padel Club Jan Thiel">Padel Club Jan Thiel<span class="sub">Jan Thiel &middot; no account yet</span></button>
-        <button data-acad="Bandabou Padel">Bandabou Padel<span class="sub">Westpunt &middot; no account yet</span></button>
+        <button data-acad="R2PRO Padel Academy">R2PRO Padel Academy<span class="sub">Willemstad, your academy</span></button>
+        <button data-acad="Padel Club Jan Thiel">Padel Club Jan Thiel<span class="sub">Jan Thiel, no account yet</span></button>
+        <button data-acad="Bandabou Padel">Bandabou Padel<span class="sub">Westpunt, no account yet</span></button>
       </div>
     </div>
-    <div class="pts-chip"><span id="ptsChip">1,340</span> pts</div>
-    <div class="avatar" id="navAvatar" style="width:34px;height:34px;font-size:13px"></div>
+
+    <div class="seg roles" role="group" aria-label="Demo role">
+      <button data-role="player" data-i18n="c.player">Player</button>
+      <button data-role="coach" data-i18n="c.coach">Coach</button>
+      <button data-role="bar" data-i18n="c.bar">Kantine</button>
+    </div>
+
+    <div class="pts-chip"><span data-points>1,340</span> <span data-i18n="c.pts">pts</span></div>
+    <div class="avatar" id="navAvatar"></div>
   </div>
 </header>
 
@@ -39,12 +55,13 @@
   <aside class="side">
     <nav id="sideNav"></nav>
     <div class="side-foot">
-      Signed in with Google<br><span id="sideEmail"></span><br>
-      <a href="index.html" style="color:var(--coral);text-decoration:underline;display:inline-block;margin-top:6px">Sign out</a>
+      <div class="langpick" id="langPick"></div>
+      <span data-i18n="c.signedIn">Signed in with Google</span><br><span id="sideEmail"></span><br>
+      <a href="index.html" class="signout" data-i18n="c.signOut">Sign out</a>
     </div>
   </aside>
 
-  <main class="main">
+  <main class="main" id="mainStart">
 
     <!-- ===== DASHBOARD ===== -->
     <section class="view on" id="v-dash">
@@ -53,51 +70,51 @@
         <p id="squadLine"></p>
       </div>
 
-      <div class="next" style="margin-bottom:16px">
-        <div>
-          <div class="eyebrow">Next session</div>
-          <div class="when">Tue 15 Sep &middot; 17:00</div>
-          <div class="meta">Court 3, Jan Thiel &middot; Squad training with Rafa &middot; bring the blue grip</div>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn btn-primary btn-sm" data-toast="You're in. See you Tuesday at 17:00.">Confirm</button>
-          <button class="btn btn-ghost btn-sm" data-toast="Coach Rafa has been notified you can't make it.">Can't make it</button>
-        </div>
-      </div>
+      <div class="next" id="nextWrap"></div>
 
-      <div class="tiles" style="margin-bottom:16px">
-        <div class="tile rate"><div class="lab">R2 rating</div><div class="val">3.25</div><div class="delta">&uarr; 0.25 since July</div></div>
-        <div class="tile"><div class="lab">Sessions</div><div class="val">48 <small>this season</small></div><div class="delta">&uarr; 6 this month</div></div>
-        <div class="tile streak"><div class="lab">Streak</div><div class="val">11 <small>in a row</small></div><div class="delta">Best: 14</div></div>
-        <div class="tile pts"><div class="lab">R2 points</div><div class="val" id="ptsTile">1,340</div><div class="delta">&uarr; 260 this month</div></div>
+      <div class="tiles">
+        <div class="tile rate"><div class="lab" data-i18n="d.rating">R2 rating</div><div class="val">3.25</div><div class="delta">&uarr; 0.25</div></div>
+        <div class="tile"><div class="lab" data-i18n="d.sessions">Sessions</div><div class="val">48 <small data-i18n="d.thisSeason">this season</small></div><div class="delta">&uarr; 6</div></div>
+        <div class="tile streak"><div class="lab" data-i18n="d.streak">Streak</div><div class="val">11 <small data-i18n="d.inRow">in a row</small></div><div class="delta"><span data-i18n="d.best">Best</span>: 14</div></div>
+        <div class="tile pts"><div class="lab" data-i18n="nav.pts">Points</div><div class="val" data-points>1,340</div><div class="delta">&uarr; 260</div></div>
       </div>
 
       <div class="two">
         <div class="card">
-          <div class="card-hd"><h3>Attendance, last 12 weeks</h3><span class="chip">92%</span></div>
+          <div class="card-hd"><h3 data-i18n="d.attendance">Attendance, last 12 weeks</h3><span class="chip">92%</span></div>
           <div id="attChart"></div>
+          <div class="goal" id="weekGoal"></div>
         </div>
         <div class="card">
-          <div class="card-hd"><h3>Recent activity</h3></div>
+          <div class="card-hd"><h3 data-i18n="d.activity">Recent activity</h3></div>
           <div class="feed" id="feed"></div>
         </div>
       </div>
     </section>
 
+    <!-- ===== SCHEDULE ===== -->
+    <section class="view" id="v-schedule">
+      <div class="view-head">
+        <h2 data-i18n="s.title">Your schedule</h2>
+        <p data-i18n="s.sub">Say yes or no and your coach sees it straight away.</p>
+      </div>
+      <div class="sessions" id="schedList"></div>
+    </section>
+
     <!-- ===== DEVELOPMENT ===== -->
     <section class="view" id="v-dev">
       <div class="view-head">
-        <h2>Player development</h2>
-        <p>Scored by your coach every six weeks. Last assessment: 2 September by Rafa Montoya.</p>
+        <h2 data-i18n="v.title">Player development</h2>
+        <p>Scored by your coach every six weeks. Last assessment: 2 September, Rafa Montoya.</p>
       </div>
 
-      <div class="two" style="margin-bottom:16px">
+      <div class="two">
         <div class="card">
           <div class="card-hd">
-            <h3>Skill profile</h3>
+            <h3 data-i18n="v.profile">Skill profile</h3>
             <div class="pseg">
-              <button data-slide="0" class="on">Hexagon</button>
-              <button data-slide="1">Body map</button>
+              <button data-slide="0" class="on" data-i18n="v.hex">Hexagon</button>
+              <button data-slide="1" data-i18n="v.body">Body map</button>
             </div>
           </div>
           <div class="pcarousel">
@@ -116,65 +133,61 @@
           </div>
           <div class="pfoot">
             <div class="scale">
-              <span><i style="background:#FF5A5A"></i>under 5.5</span>
-              <span><i style="background:#FFC24B"></i>5.5 to 7</span>
-              <span><i style="background:#5BD98A"></i>over 7</span>
+              <span><i style="background:#FF5A5A"></i><span data-i18n="v.needs">needs work</span></span>
+              <span><i style="background:#FFC24B"></i><span data-i18n="v.solid">solid</span></span>
+              <span><i style="background:#5BD98A"></i><span data-i18n="v.strong">strong</span></span>
             </div>
-            <div class="swipe">
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3L2 8l4 5M10 3l4 5-4 5"/></svg>
-              swipe to switch
-            </div>
+            <div class="swipe" data-i18n="v.swipe">swipe to switch</div>
           </div>
         </div>
         <div class="card">
-          <div class="card-hd"><h3>Coach notes</h3></div>
-          <div class="note"><p>Bandeja is landing deep now, keep the racket face open on the follow through. Next block we work on the v&iacute;bora so you stop giving the net back.</p><div class="by">Rafa Montoya &middot; 2 Sep</div></div>
-          <div class="note"><p>Much calmer on wall exits. Still rushing the chiquita when under pressure: slow feet, low bounce.</p><div class="by">Rafa Montoya &middot; 21 Jul</div></div>
-          <div class="note"><p>Fitness block done. Lateral movement improved, good work in camp week.</p><div class="by">Yaritza Pieters &middot; 9 Jun</div></div>
+          <div class="card-hd"><h3 data-i18n="v.notes">Coach notes</h3></div>
+          <div class="note"><p>Bandeja is landing deep now, keep the racket face open on the follow through. Next block we work on the v&iacute;bora so you stop giving the net back.</p><div class="by">Rafa Montoya, 2 Sep</div></div>
+          <div class="note"><p>Much calmer on wall exits. Still rushing the chiquita when under pressure: slow feet, low bounce.</p><div class="by">Rafa Montoya, 21 Jul</div></div>
+          <div class="note"><p>Fitness block done. Lateral movement improved, good work in camp week.</p><div class="by">Yaritza Pieters, 9 Jun</div></div>
         </div>
       </div>
 
-      <div class="card-hd"><h3 style="font-size:14px">Skills, scored out of 10</h3></div>
+      <div class="card-hd stack"><h3 data-i18n="v.skills">Skills, scored out of 10</h3></div>
       <div class="skills" id="skills"></div>
 
-      <div class="card" style="margin-top:16px">
-        <div class="card-hd"><h3>Level progression</h3><span class="chip ochre">Next: 3.50</span></div>
-        <div class="prow" style="margin-bottom:8px"><span>7 more squad sessions and a v&iacute;bora score of 6.0 unlocks level 3.50</span><b style="color:var(--coral)">3.25 / 3.50</b></div>
-        <div class="track" style="height:8px"><i style="width:65%;background:linear-gradient(90deg,var(--sea),var(--coral))"></i></div>
+      <div class="card stack">
+        <div class="card-hd"><h3 data-i18n="v.level">Level progression</h3><span class="chip ochre">3.50</span></div>
+        <div class="prow"><span>7 more squad sessions and a v&iacute;bora score of 6.0 unlocks level 3.50</span><b class="coral">3.25 / 3.50</b></div>
+        <div class="track tall"><i style="width:65%;background:linear-gradient(90deg,var(--sea),var(--coral))"></i></div>
       </div>
     </section>
 
     <!-- ===== POINTS ===== -->
     <section class="view" id="v-pts">
       <div class="view-head">
-        <h2>Points &amp; kantine</h2>
-        <p>Earn points on court, spend them at the bar. Show the code to the staff and they confirm it in seconds.</p>
+        <h2 data-i18n="p.title">Points &amp; kantine</h2>
+        <p data-i18n="p.sub">Earn on court, spend at the bar.</p>
       </div>
 
-      <div class="balance" style="margin-bottom:18px">
+      <div class="balance">
         <div>
-          <div class="lab">Your balance</div>
-          <div class="big" id="ptsBig">1,340</div>
-          <div class="mono" style="font-size:12px;color:var(--muted);margin-top:6px">260 earned this month &middot; none expiring</div>
+          <div class="lab" data-i18n="p.balance">Your balance</div>
+          <div class="big" data-points>1,340</div>
         </div>
-        <div style="max-width:400px">
-          <div class="lab" style="margin-bottom:9px">How you earn</div>
+        <div class="earnwrap">
+          <div class="lab" data-i18n="p.earn">How you earn</div>
           <div class="earn">
             <span class="chip ochre">Training +50</span>
             <span class="chip ochre">On time +10</span>
             <span class="chip ochre">Camp day +100</span>
             <span class="chip ochre">Home drill +15</span>
             <span class="chip ochre">Bring a friend +150</span>
-            <span class="chip ochre">Club tournament +200</span>
+            <span class="chip ochre">Tournament +200</span>
           </div>
         </div>
       </div>
 
-      <div class="card-hd"><h3 style="font-size:14px">Kantine</h3><span class="chip">Prices in points</span></div>
+      <div class="card-hd stack"><h3 data-i18n="p.kantine">Kantine</h3><span class="chip" data-i18n="p.inPoints">Prices in points</span></div>
       <div class="shop" id="shop"></div>
 
-      <div class="card" style="margin-top:18px">
-        <div class="card-hd"><h3>Redemption history</h3></div>
+      <div class="card stack">
+        <div class="card-hd"><h3 data-i18n="p.history">Redemption history</h3></div>
         <div class="feed" id="history"></div>
       </div>
     </section>
@@ -182,36 +195,118 @@
     <!-- ===== HOME TRAINING ===== -->
     <section class="view" id="v-home">
       <div class="view-head">
-        <h2>At-home training</h2>
-        <p>Drills your coaches film and upload. Mark one complete and it lands in your development file, plus 15 points.</p>
+        <h2 data-i18n="h.title">At-home training</h2>
+        <p data-i18n="h.sub">Drills your coaches film.</p>
       </div>
-
       <div class="filters" id="filters"></div>
       <div class="drills" id="drills"></div>
-
-      <div class="card" style="margin-top:18px">
-        <div class="card-hd"><h3>This week's assignment</h3><span class="chip sea">from Coach Rafa</span></div>
-        <p style="font-size:13.5px;color:var(--muted)">Three sessions before Thursday: wall control, shadow bandeja and the mobility routine. Complete all three and you get a 50 point bonus on top.</p>
+      <div class="card stack">
+        <div class="card-hd"><h3 data-i18n="h.assignment">This week's assignment</h3><span class="chip sea">Coach Rafa</span></div>
+        <p class="muted">Three sessions before Thursday: wall control, shadow bandeja and the mobility routine. Finish all three for a 50 point bonus.</p>
       </div>
+    </section>
+
+    <!-- ===== SQUAD ===== -->
+    <section class="view" id="v-squad">
+      <div class="view-head">
+        <h2 data-i18n="q.title">Squad standings</h2>
+        <p data-i18n="q.sub">Points earned this season.</p>
+      </div>
+      <div class="card"><div class="standings" id="standings"></div></div>
+      <div class="card-hd stack"><h3 data-i18n="q.badges">Your badges</h3></div>
+      <div class="badges" id="badges"></div>
     </section>
 
     <!-- ===== COACHES ===== -->
     <section class="view" id="v-coach">
       <div class="view-head">
         <h2>Meet the coaches</h2>
-        <p>Eight coaches at R2PRO. Book a private lesson or jump to the drills they have uploaded.</p>
+        <p>Eight coaches at R2PRO. Book a private or jump to the drills they uploaded.</p>
       </div>
       <div class="cgrid" id="coachList"></div>
+    </section>
+
+    <!-- ===== COACH TOOLS ===== -->
+    <section class="view" id="v-staff">
+      <div class="view-head">
+        <h2 data-i18n="t.title">Coach tools</h2>
+        <p data-i18n="t.sub">Check the squad in, score a skill, upload a drill.</p>
+      </div>
+
+      <div class="two">
+        <div class="card">
+          <div class="card-hd"><h3 data-i18n="t.roster">Today's check-in</h3><span class="chip sea">Court 3, 17:00</span></div>
+          <div class="roster" id="roster"></div>
+        </div>
+
+        <div class="stack-col">
+          <div class="card">
+            <div class="card-hd"><h3 data-i18n="t.assess">Quick assessment</h3></div>
+            <p class="muted small" data-i18n="t.assessSub">Score a skill and the player sees it in Development.</p>
+            <label class="field"><span data-i18n="c.player">Player</span><select id="assessPlayer"></select></label>
+            <label class="field"><span data-i18n="v.skills">Skill</span><select id="assessSkill"></select></label>
+            <label class="field range">
+              <span>Score <b id="assessOut">6.0</b></span>
+              <input type="range" id="assessVal" min="0" max="10" step="0.1" value="6">
+            </label>
+            <button class="btn btn-primary btn-sm" id="saveAssess" data-i18n="c.save">Save</button>
+          </div>
+
+          <div class="card">
+            <div class="card-hd"><h3 data-i18n="t.newDrill">New home drill</h3></div>
+            <label class="field"><span data-i18n="t.drillName">Drill name</span>
+              <input type="text" id="drillName" placeholder="Wall control, 50 touches"></label>
+            <div class="field-row">
+              <label class="field"><span>Level</span>
+                <select id="drillLvl">
+                  <option>All levels</option><option>Beginner</option>
+                  <option>Intermediate</option><option>Advanced</option>
+                </select></label>
+              <label class="field"><span>Length</span><input type="text" id="drillDur" placeholder="6:12"></label>
+            </div>
+            <label class="field"><span>Kit needed</span><input type="text" id="drillKit" placeholder="Wall + ball"></label>
+            <button class="btn btn-primary btn-sm" id="publishDrill" data-i18n="t.publish">Publish to the squad</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== KANTINE STAFF ===== -->
+    <section class="view" id="v-bar">
+      <div class="view-head">
+        <h2 data-i18n="k.title">Kantine staff</h2>
+        <p data-i18n="k.sub">Type the code from the player's screen to confirm it.</p>
+      </div>
+      <div class="card bar-card">
+        <label class="field"><span data-i18n="k.code">Redemption code</span>
+          <input type="text" id="barCode" class="codein" maxlength="5" autocomplete="off"
+                 spellcheck="false" placeholder="7K2QM"></label>
+        <button class="btn btn-primary" id="barCheck" data-i18n="k.check">Check code</button>
+        <div id="barResult"></div>
+        <p class="muted small">Scanning the player's QR with the camera opens this screen with the code already filled.</p>
+      </div>
     </section>
 
   </main>
 </div>
 
 <div class="tabbar"><nav id="tabNav"></nav></div>
+
+<div class="modal" id="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <button class="sheet-x" id="modalClose" aria-label="Close">&times;</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="assets/data.js"></script>
+<script src="assets/store.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/qr.js"></script>
 <script src="assets/site.js"></script>
+<script src="assets/figure.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>

@@ -1,49 +1,65 @@
 # R2PRO
 
-Padel academy platform for Curaçao. Prototype of the player-facing web app, built to run one academy now and be licensed to other clubs later.
+Padel academy platform. Runs R2PRO in Willemstad, Curacao today, and is built so other
+academies can run their club on the same software with their own branding, coaches,
+points rules and kantine menu.
+
+Live: https://a3dprintingcw-cyber.github.io/r2pro/
+
+Static site. No build step, no dependencies, no framework. Open `index.html` and it runs.
 
 ## Pages
 
 | File | What it is |
 |---|---|
-| `index.html` | Home: hero, player card, what's inside the app |
-| `academies.html` | One login, many clubs. What each academy controls |
-| `programs.html` | Kids Academy, privates, squad, camps + the points loop |
-| `coaches.html` | The eight coaches, and what coaches do in the app |
-| `pricing.html` | Club licence plans and FAQ |
-| `app.html` | The logged-in player app |
+| `index.html` | Home: hero, sample player card, the six app screens |
+| `academies.html` | One login, many clubs, and what each academy controls |
+| `programs.html` | Kids Academy, privates, squad, camps, and the points loop |
+| `coaches.html` | Eight coach profiles |
+| `pricing.html` | Club licence plans, switchable between XCG, USD and EUR, monthly or yearly |
+| `app.html` | The logged-in app, hash routed |
+| `404.html` | Served by GitHub Pages on a bad URL |
 
-## Inside the player app
+## The app
 
-- **Dashboard** — next session, R2 rating, sessions, streak, points, attendance chart, activity feed
-- **Development** — skill radar vs. squad average, nine skill cards scored out of 10 with the change since the last assessment, coach notes, level progression
-- **Points & kantine** — balance, how points are earned, kantine shop with a working redeem flow and redemption codes, history
-- **At-home training** — drills uploaded by the coaches, level filters, mark-complete for +15 points, coach-only upload tile
-- **Coaches** — profiles, specialties, languages, book a private lesson
+Three roles over the same local state, switched from the bar at the top:
 
-Deep links work: `app.html#dev`, `app.html#pts`, `app.html#home`, `app.html#coach`.
+**Player** — dashboard with the next session and a week goal, schedule with yes/no and
+an `.ics` download, development (hexagon radar, shot silhouettes, nine skill cards),
+points and kantine, at-home drills, squad standings and badges, coach profiles.
 
-## Assets
+**Coach** — check the squad in from the court, score any skill on a slider and the
+player sees it in Development immediately, publish a new home drill.
 
-- `assets/styles.css` — all styling, one dark theme, tokens at the top
-- `assets/data.js` — every piece of sample data in one place. Swap for API calls
-- `assets/site.js` — mobile menu, toasts, coach cards
-- `assets/app.js` — the player app
+**Kantine staff** — type or scan a redemption code, see what was bought and by whom,
+confirm it. Scanning the player's QR with a phone camera opens this screen with the
+code already filled, because the QR encodes `app.html#verify-CODE`.
 
-No build step, no dependencies. Fonts come from Google Fonts.
+## Files
 
-## Roadmap
+| File | Job |
+|---|---|
+| `assets/styles.css` | Everything visual. One dark theme, by choice. |
+| `assets/data.js` | Sample data. Sessions are generated from today so the demo never goes stale. |
+| `assets/store.js` | Local state in `localStorage`, kept per academy. Points, RSVPs, completed drills, redemptions, coach edits. |
+| `assets/i18n.js` | English, Papiamentu, Dutch and Spanish. Mark up with `data-i18n="key"`. |
+| `assets/qr.js` | QR encoder, byte mode, error correction M, versions 1 to 10. Verified byte for byte against a reference encoder. |
+| `assets/figure.js` | The hexagon radar and the shot silhouettes. |
+| `assets/app.js` | The app itself. |
+| `assets/site.js` | Shared chrome: menu, toasts, language picker, install prompt, service worker. |
+| `assets/pricing.js` | Currency and billing switching on the pricing page. |
+| `sw.js` + `manifest.webmanifest` | Installs to the home screen and keeps working when the court wifi drops. |
 
-- Google OAuth and real player accounts
-- Multi-tenant: academies sign up, set their own branding, programs, coaches, points rules and kantine menu
-- Coach app: tap attendance on court, score assessments, upload drills
-- Kantine staff view to confirm redemption codes
-- Billing for academy subscriptions
+## Still to build
 
-## Run it locally
+- Google OAuth and real accounts. The sign-in button opens the app.
+- A backend. Every number lives in `data.js` and every change lives in `localStorage`.
+- Video hosting for the drills. The thumbnails are gradients.
+- Billing for academy subscriptions.
+- Multi-tenant data separation on the server. The client already keeps one record per club.
 
-```
-python3 -m http.server 8000
-```
+## Notes
 
-Then open http://localhost:8000
+- Prices are in XCG, the Caribbean guilder that replaced the Antillean guilder in 2025.
+  USD and EUR on the pricing page are converted for readability and invoiced in XCG.
+- Reset the demo from the browser console: `r2store.reset()` then reload.
