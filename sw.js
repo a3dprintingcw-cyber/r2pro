@@ -1,5 +1,5 @@
 /* R2PRO service worker. App shell cached so the courtside wifi stops mattering. */
-var CACHE = "r2pro-v2";
+var CACHE = "r2pro-v3";
 var SHELL = [
   "./", "index.html", "app.html", "academies.html", "programs.html",
   "coaches.html", "pricing.html", "404.html", "manifest.webmanifest",
@@ -37,11 +37,13 @@ self.addEventListener("fetch", function(e){
     }));
     return;
   }
+  /* stale while revalidate: serve the cached copy, refresh it in the background */
   e.respondWith(caches.match(req).then(function(m){
-    return m || fetch(req).then(function(res){
+    var net = fetch(req).then(function(res){
       var copy = res.clone();
       caches.open(CACHE).then(function(c){ c.put(req, copy); });
       return res;
-    });
+    }).catch(function(){ return m; });
+    return m || net;
   }));
 });
