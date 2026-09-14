@@ -20,14 +20,36 @@
   });
 
   /* ---------- toast ---------- */
-  var toastEl = document.getElementById("toast"), toastT;
-  window.r2toast = function(msg){
+  var toastEl = document.getElementById("toast"), toastT, toastAct = null;
+  /* r2toast(message) or r2toast(message, actionLabel, onAction) — the action turns
+     a destructive tap into something you can take back for a few seconds. */
+  window.r2toast = function(msg, actionLabel, onAction){
     if(!toastEl) return;
-    toastEl.textContent = msg;
+    toastAct = onAction || null;
+    toastEl.textContent = "";
+    var span = document.createElement("span");
+    span.textContent = msg;
+    toastEl.appendChild(span);
+    if(actionLabel && onAction){
+      var b = document.createElement("button");
+      b.className = "toast-act";
+      b.type = "button";
+      b.textContent = actionLabel;
+      toastEl.appendChild(b);
+    }
     toastEl.classList.add("show");
     clearTimeout(toastT);
-    toastT = setTimeout(function(){ toastEl.classList.remove("show"); }, 2800);
+    toastT = setTimeout(function(){ toastEl.classList.remove("show"); toastAct = null; }, actionLabel ? 5200 : 2800);
   };
+  if(toastEl){
+    toastEl.addEventListener("click", function(e){
+      if(!e.target.closest(".toast-act") || !toastAct) return;
+      var fn = toastAct;
+      toastAct = null;
+      toastEl.classList.remove("show");
+      fn();
+    });
+  }
   document.addEventListener("click", function(e){
     var b = e.target.closest("[data-toast]");
     if(b) window.r2toast(b.dataset.toast);

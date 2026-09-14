@@ -15,6 +15,35 @@ window.r2figure = (function(){
     return {c:"#5BD98A", t:T("v.strong")};
   }
 
+  /* set by mount() so the rest of the app can drive the viewer */
+  var pickShot = null, goSlide = null;
+
+  /* The nine skill cards and the eight-plus shot poses are two different lists.
+     Match on the English key, then the Spanish gloss, so "Serve & return" finds
+     "Serve" and "Volley" finds "volea". */
+  function shotIndex(name){
+    if(!D.BODY) return -1;
+    var q = String(name).toLowerCase();
+    for(var i=0;i<D.BODY.length;i++){
+      var b = D.BODY[i];
+      if(b.k.toLowerCase() === q) return i;
+    }
+    for(var j=0;j<D.BODY.length;j++){
+      var c = D.BODY[j];
+      if(q.indexOf(c.k.toLowerCase()) === 0 || c.k.toLowerCase().indexOf(q) === 0) return j;
+      if(c.es && c.es.toLowerCase() === q) return j;
+    }
+    return -1;
+  }
+
+  function showShot(name){
+    var i = shotIndex(name);
+    if(i < 0 || !pickShot) return false;
+    if(goSlide) goSlide(1);
+    pickShot(i);
+    return true;
+  }
+
   function mount(){
     /* ---------- skill profile: slide 1 radar, slide 2 body map ---------- */
     var MONO = 'IBM Plex Mono, monospace';
@@ -249,12 +278,19 @@ window.r2figure = (function(){
           '<span class="bs" style="color:'+c+'">'+sk.v.toFixed(1)+'</span></button>';
       }).join("");
 
-      list.addEventListener("click", function(e){
+      list.onclick = function(e){
         var b = e.target.closest("[data-shot]");
         if(!b) return;
-        list.querySelectorAll("[data-shot]").forEach(function(x){ x.classList.toggle("on", x === b); });
-        draw(D.BODY[+b.dataset.shot]);
-      });
+        pickShot(+b.dataset.shot);
+      };
+
+      pickShot = function(i){
+        var rows = list.querySelectorAll("[data-shot]");
+        Array.prototype.forEach.call(rows, function(x){ x.classList.toggle("on", +x.dataset.shot === i); });
+        var row = rows[i];
+        if(row && row.scrollIntoView) row.scrollIntoView({block:"nearest"});
+        draw(D.BODY[i]);
+      };
 
       draw(D.BODY[0]);
     })();
@@ -267,22 +303,22 @@ window.r2figure = (function(){
       function mark(i){
         btns.forEach(function(b){ b.classList.toggle("on", +b.dataset.slide === i); });
       }
+      goSlide = function(i){
+        strip.scrollTo({left: i * strip.clientWidth, behavior: "smooth"});
+        mark(i);
+      };
       btns.forEach(function(b){
-        b.addEventListener("click", function(){
-          var i = +b.dataset.slide;
-          strip.scrollTo({left: i * strip.clientWidth, behavior: "smooth"});
-          mark(i);
-        });
+        b.onclick = function(){ goSlide(+b.dataset.slide); };
       });
       var t;
-      strip.addEventListener("scroll", function(){
+      strip.onscroll = function(){
         clearTimeout(t);
         t = setTimeout(function(){
           mark(Math.round(strip.scrollLeft / strip.clientWidth));
         }, 90);
-      });
+      };
     })();
   }
 
-  return {mount:mount, band:band};
+  return {mount:mount, band:band, showShot:showShot, shotIndex:shotIndex};
 })();

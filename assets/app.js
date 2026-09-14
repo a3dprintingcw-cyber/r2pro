@@ -26,6 +26,26 @@
     return new Intl.DateTimeFormat(locale(), {hour:"2-digit", minute:"2-digit", hour12:false}).format(d);
   }
 
+  /* A short tap on a real action. Silent where the browser has no vibrator,
+     and skipped entirely for anyone who asked for less motion. */
+  var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function haptic(ms){
+    if(calm || !navigator.vibrate) return;
+    try{ navigator.vibrate(ms || 12); }catch(e){}
+  }
+
+  function share(title, text, url){
+    if(navigator.share){
+      navigator.share({title:title, text:text, url:url}).catch(function(){});
+      return true;
+    }
+    if(navigator.clipboard && url){
+      navigator.clipboard.writeText(url).then(function(){ window.r2toast(t("c.share") + " \u2713"); }, function(){});
+      return true;
+    }
+    return false;
+  }
+
   /* ---------------------------------------------------------------- navigation */
 
   var NAV = [
@@ -42,7 +62,16 @@
 
   var role = S.all.role || "player";
 
-  function navFor(r){ return NAV.filter(function(n){ return n.roles.indexOf(r) !== -1; }); }
+  function navFor(r){
+    var list = NAV.filter(function(n){ return n.roles.indexOf(r) !== -1; });
+    /* A coach opens the app to check a squad in, not to read their own stats.
+       Put the tool they came for where the thumb already is. */
+    if(r === "coach"){
+      var i = list.findIndex(function(n){ return n.id === "staff"; });
+      if(i > 1) list.splice(1, 0, list.splice(i, 1)[0]);
+    }
+    return list;
+  }
 
   function shortLabel(id){
     var k = "short." + id;
@@ -54,23 +83,47 @@
     side.innerHTML = list.map(function(n){
       return '<button class="navbtn" data-go="'+n.id+'">'+icon(n.icon)+'<span>'+t("nav."+n.id)+'</span></button>';
     }).join("");
-    tabs.innerHTML = list.slice(0, 5).map(function(n){
+    /* Five slots. Anything past four goes behind More, so nothing is stranded off
+       the bottom of a phone the way Coach tools used to be. */
+    var inBar = list.length > 5 ? list.slice(0, 4) : list;
+    tabs.innerHTML = inBar.map(function(n){
       return '<button class="tabbtn" data-go="'+n.id+'">'+icon(n.icon)+'<span>'+shortLabel(n.id)+'</span></button>';
-    }).join("");
+    }).join("") + (list.length > 5 ?
+      '<button class="tabbtn" id="moreTab">'+
+      icon('<circle cx="4.5" cy="11" r="1.6"/><circle cx="11" cy="11" r="1.6"/><circle cx="17.5" cy="11" r="1.6"/>')+
+      '<span>'+t("c.more")+'</span></button>' : "");
+  }
+
+  function openMore(){
+    var list = navFor(role);
+    modal('<div class="more-wrap"><div class="eyebrow">'+t("c.goTo")+'</div>'+
+      '<div class="more-grid">'+list.map(function(n){
+        return '<button class="more-btn" data-go="'+n.id+'" data-close>'+icon(n.icon, 20)+
+               '<span>'+t("nav."+n.id)+'</span></button>';
+      }).join("")+'</div></div>');
   }
 
   function show(id, push){
     var list = navFor(role);
     if(!list.some(function(n){ return n.id === id; })) id = list[0].id;
+    if(id !== "bar" && typeof stopScan === "function" && scanning) stopScan();
     $$(".view").forEach(function(v){ v.classList.toggle("on", v.id === "v-" + id); });
     $$("[data-go]").forEach(function(x){ x.classList.toggle("active", x.dataset.go === id); });
     if(push && location.hash !== "#" + id) history.replaceState(null, "", "#" + id);
-    window.scrollTo({top:0, behavior:"smooth"});
+    window.scrollTo({top:0, behavior: calm ? "auto" : "smooth"});
   }
 
   document.addEventListener("click", function(e){
+    if(e.target.closest("#moreTab")){ openMore(); return; }
     var b = e.target.closest("[data-go]");
-    if(b) show(b.dataset.go, true);
+    if(!b) return;
+    if(b.hasAttribute("data-close")) closeModal();
+    show(b.dataset.go, true);
+  });
+
+  /* never leave the camera running behind another screen */
+  document.addEventListener("visibilitychange", function(){
+    if(document.hidden && typeof stopScan === "function") stopScan();
   });
 
   window.addEventListener("hashchange", function(){ route(location.hash.slice(1)); });
@@ -91,7 +144,7 @@
   function setRole(r){
     role = r;
     S.patch({role:r});
-    $$("[data-role]").forEach(function(b){ b.classList.toggle("on", b.dataset.role === r); });
+    $$(".roles [data-role]").forEach(function(b){ b.classList.toggle("on", b.dataset.role === r); });
     document.body.dataset.role = r;
     buildNav();
     show(navFor(r)[0].id, true);
@@ -123,9 +176,11 @@
   function feedHTML(rows, emptyMsg){
     if(!rows.length) return '<p class="empty">'+(emptyMsg || "")+'</p>';
     return rows.map(function(f){
-      return '<div class="fitem"><span class="fdot '+(f.c||"")+'"></span>'+
+      var tag = f.tap ? "button" : "div";
+      return '<'+tag+' class="fitem'+(f.tap?" tap":"")+'"'+(f.tap?' data-open-code="'+f.tap+'"':'')+'>'+
+        '<span class="fdot '+(f.c||"")+'"></span>'+
         '<div><div class="t">'+f.t+'</div><div class="d">'+f.d+'</div></div>'+
-        (f.a ? '<div class="amt'+(f.neg?" neg":"")+'">'+f.a+'</div>' : '')+'</div>';
+        (f.a ? '<div class="amt'+(f.neg?" neg":"")+'">'+f.a+'</div>' : '')+'</'+tag+'>';
     }).join("");
   }
 
@@ -157,7 +212,36 @@
     $("#weekGoal").innerHTML = ring(pct, Math.round(pct*100) + "%", t("d.goalSub"));
 
     $("#feed").innerHTML = feedHTML(D.FEED);
+    renderNba();
     paintPoints();
+  }
+
+  /* One card, one thing to do. Beats a dashboard that shows six numbers and asks
+     the player to work out what it wants from them. */
+  function renderNba(){
+    var el = $("#nba");
+    if(!el) return;
+    var next = D.SCHEDULE[0];
+    var cheapest = D.SHOP.reduce(function(a,b){ return b.c < a.c ? b : a; }, D.SHOP[0]);
+    var pick;
+
+    if(next && !S.rsvp(next.id)){
+      pick = {go:"schedule", label:t("d.nbaRsvp"), sub:fmtDay(next.date) + " · " + fmtTime(next.date)};
+    } else if((S.club.weekDrills || 0) < 1){
+      pick = {go:"home", label:t("d.nbaDrill"), sub:"+15 " + t("c.points")};
+    } else if(cheapest && points() >= cheapest.c){
+      pick = {go:"pts", label:t("d.nbaSpend"), sub:cheapest.n + " · " + fmt(cheapest.c) + " " + t("c.pts")};
+    } else {
+      pick = null;
+    }
+
+    if(!pick){ el.hidden = true; return; }
+    el.hidden = false;
+    el.dataset.go = pick.go;
+    el.innerHTML = '<span class="nba-eye">'+t("d.doNext")+'</span>'+
+      '<span class="nba-t">'+esc(pick.label)+'</span>'+
+      '<span class="nba-s">'+esc(pick.sub)+'</span>'+
+      '<svg class="nba-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>';
   }
 
   (function attendance(){
@@ -252,13 +336,30 @@
       var delta = moved > 0 ? '<span class="up">&uarr; '+moved.toFixed(1)+'</span>'
                 : moved < 0 ? '<span class="down">&darr; '+Math.abs(moved).toFixed(1)+'</span>'
                 : t("v.noChange");
-      return '<div class="skill">'+
+      /* Tapping a skill should show that shot being played, which is the whole point
+         of having drawn the poses. Cards with no pose stay plain rather than lying. */
+      var hasShot = window.r2figure && window.r2figure.shotIndex(s.n) >= 0;
+      var tag = hasShot ? "button" : "div";
+      return '<'+tag+' class="skill'+(hasShot?" tap":"")+'"'+(hasShot?' data-shot-key="'+esc(s.n)+'"':'')+'>'+
         '<div class="skill-top"><div><div class="skill-name">'+s.n+'</div><div class="skill-es">'+s.es+'</div></div>'+
         '<div class="skill-score">'+v.toFixed(1)+'<small>/10</small></div></div>'+
         '<div class="track"><i style="width:'+(v*10)+'%"></i></div>'+
-        '<div class="skill-foot"><span>'+delta+'</span><span>'+s.by+' · '+s.on+'</span></div></div>';
+        '<div class="skill-foot"><span>'+delta+'</span><span>'+s.by+' · '+s.on+'</span></div>'+
+        (hasShot ? '<span class="skill-cue">'+t("v.seeShot")+
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>' : '')+
+        '</'+tag+'>';
     }).join("");
   }
+
+  document.addEventListener("click", function(e){
+    var b = e.target.closest("[data-shot-key]");
+    if(!b || !window.r2figure) return;
+    if(window.r2figure.showShot(b.dataset.shotKey)){
+      haptic();
+      var card = $("#pslides");
+      if(card && card.scrollIntoView) card.scrollIntoView({block:"center", behavior: calm ? "auto" : "smooth"});
+    }
+  });
 
   function applyEdits(){
     var edits = S.club.skillEdits;
@@ -282,8 +383,21 @@
 
   var codeTimer;
 
+  function codeUrl(code){
+    return location.origin + location.pathname + "#verify-" + code;
+  }
+
+  /* Pending codes that have not expired: what the player can still spend and what
+     the bar is still waiting on. Same source of truth for both screens. */
+  function liveCodes(){
+    var now = Date.now();
+    return S.club.redemptions.filter(function(r){
+      return r.status !== "confirmed" && r.at + CODE_LIFE > now;
+    });
+  }
+
   function openCode(rec){
-    var url = location.origin + location.pathname + "#verify-" + rec.code;
+    var url = codeUrl(rec.code);
     var qr = window.r2qr ? window.r2qr.svg(url, {fg:"#0A1622", bg:"#FFFFFF"}) : "";
     modal(
       '<div class="code-wrap">'+
@@ -293,6 +407,7 @@
         '<div class="code-big">'+rec.code+'</div>'+
         '<div class="code-exp"><span id="codeLeft"></span></div>'+
         '<p class="code-note">'+fmt(rec.cost)+' '+t("c.points")+'</p>'+
+        (navigator.share ? '<button class="btn btn-ghost btn-sm" data-share-code="'+rec.code+'">'+t("c.share")+'</button>' : '')+
       '</div>');
     clearInterval(codeTimer);
     function tick(){
@@ -303,6 +418,7 @@
         el.textContent = t("p.expired");
         el.parentElement.classList.add("dead");
         clearInterval(codeTimer);
+        renderLive(); renderQueue(); renderHistory();
         return;
       }
       var m = Math.floor(left/60000), s = Math.floor(left%60000/1000);
@@ -321,12 +437,42 @@
     paintPoints();
   }
 
+  /* The player closes the QR, walks to the bar, and needs it again. Keep one live
+     code in front of them with the clock running, instead of making them redeem twice. */
+  var liveTimer;
+
+  function renderLive(){
+    var el = $("#liveCode");
+    if(!el) return;
+    var live = liveCodes()[0];
+    clearInterval(liveTimer);
+    if(!live){ el.hidden = true; el.innerHTML = ""; return; }
+    el.hidden = false;
+
+    function paint(){
+      var left = live.at + CODE_LIFE - Date.now();
+      if(left <= 0){ clearInterval(liveTimer); renderLive(); renderHistory(); return; }
+      var m = Math.floor(left/60000), sec = Math.floor(left%60000/1000);
+      el.innerHTML =
+        '<div class="lc-in">'+
+          '<div><div class="eyebrow">'+t("p.live")+'</div>'+
+          '<div class="lc-item">'+esc(live.item)+'</div>'+
+          '<div class="lc-meta"><b>'+live.code+'</b> &middot; '+t("p.expires")+' '+m+':'+(sec<10?"0":"")+sec+'</div></div>'+
+          '<button class="btn btn-primary btn-sm" data-open-code="'+live.code+'">'+t("p.showQr")+'</button>'+
+        '</div>';
+    }
+    paint();
+    liveTimer = setInterval(paint, 1000);
+  }
+
   function renderHistory(){
     var df = new Intl.DateTimeFormat(locale(), {day:"numeric", month:"short"});
+    var now = Date.now();
     var rows = S.club.redemptions.map(function(r){
+      var pending = r.status !== "confirmed" && r.at + CODE_LIFE > now;
       var state = r.status === "confirmed" ? t("k.confirmed")
-                : (r.at + CODE_LIFE < Date.now() ? t("p.expired") : t("p.show"));
-      return {c:"o", t:esc(r.item),
+                : (pending ? t("p.tapShow") : t("p.expired"));
+      return {c:"o", t:esc(r.item), tap: pending ? r.code : null,
               d:df.format(new Date(r.at)) + " · " + r.code + " · " + state,
               a:"-"+fmt(r.cost), neg:true};
     });
@@ -340,8 +486,24 @@
     S.addPoints(-it.c);
     var rec = {code:newCode(), item:it.n, cost:it.c, at:Date.now(), status:"pending"};
     S.addRedemption(rec);
-    paintPoints(); renderHistory(); renderSquad();
+    haptic(18);
+    paintPoints(); renderHistory(); renderSquad(); renderLive(); renderQueue();
     openCode(rec);
+  });
+
+  /* reopening a code, and sharing one */
+  document.addEventListener("click", function(e){
+    var o = e.target.closest("[data-open-code]");
+    if(o){
+      var rec = S.findRedemption(o.dataset.openCode);
+      if(rec) openCode(rec);
+      return;
+    }
+    var sh = e.target.closest("[data-share-code]");
+    if(sh){
+      var c = sh.dataset.shareCode, r = S.findRedemption(c);
+      share("R2PRO", (r ? r.item + " · " : "") + c, codeUrl(c));
+    }
   });
 
   /* ---------------------------------------------------------------- home training */
@@ -427,19 +589,44 @@
 
   /* ---------------------------------------------------------------- coach tools */
 
-  function renderStaff(){
-    var checks = S.club.checkins;
-    $("#roster").innerHTML = D.ROSTER.map(function(p){
-      var on = !!checks[p.id];
-      return '<button class="rrow'+(on?" on":"")+'" data-check="'+p.id+'">'+
-        '<span class="avatar sm'+(on?"":" sea")+'">'+p.i+'</span>'+
-        '<span class="who">'+esc(p.n)+'<small>'+p.group+'</small></span>'+
-        '<span class="state">'+(on ? "&#10003; " + t("t.present") : t("t.in"))+'</span></button>';
-    }).join("");
+  var checkSession = D.SCHEDULE[0] ? D.SCHEDULE[0].id : "s0";
+  var rosterQuery = "";
+  var lastChecks = null;   /* one level of undo, because fat fingers on a wet phone */
 
-    var sel = $("#assessPlayer");
-    if(sel && !sel.options.length)
-      sel.innerHTML = D.ROSTER.map(function(p){ return '<option value="'+p.id+'">'+esc(p.n)+'</option>'; }).join("");
+  function sessionLabel(sess){
+    return fmtDay(sess.date) + " · " + fmtTime(sess.date) + " · " + sess.kind;
+  }
+
+  function renderStaff(){
+    var sel = $("#checkSession");
+    if(sel && !sel.options.length){
+      sel.innerHTML = D.SCHEDULE.map(function(x){
+        return '<option value="'+x.id+'">'+esc(sessionLabel(x))+'</option>';
+      }).join("");
+      sel.value = checkSession;
+    }
+
+    var checks = S.checks(checkSession);
+    var q = rosterQuery.trim().toLowerCase();
+    var list = D.ROSTER.filter(function(p){
+      return !q || p.n.toLowerCase().indexOf(q) !== -1 || String(p.group).toLowerCase().indexOf(q) !== -1;
+    });
+
+    var total = D.ROSTER.length, on = Object.keys(checks).length;
+    var cc = $("#checkCount");
+    if(cc) cc.textContent = on + "/" + total + " " + t("t.checkedOf");
+
+    $("#roster").innerHTML = list.length ? list.map(function(p){
+      var isOn = !!checks[p.id];
+      return '<button class="rrow'+(isOn?" on":"")+'" data-check="'+p.id+'">'+
+        '<span class="avatar sm'+(isOn?"":" sea")+'">'+p.i+'</span>'+
+        '<span class="who">'+esc(p.n)+'<small>'+p.group+'</small></span>'+
+        '<span class="state">'+(isOn ? "&#10003; " + t("t.present") : t("t.in"))+'</span></button>';
+    }).join("") : '<p class="empty">'+t("t.noPlayer")+'</p>';
+
+    var sel2 = $("#assessPlayer");
+    if(sel2 && !sel2.options.length)
+      sel2.innerHTML = D.ROSTER.map(function(p){ return '<option value="'+p.id+'">'+esc(p.n)+'</option>'; }).join("");
     var sk = $("#assessSkill");
     if(sk && !sk.options.length)
       sk.innerHTML = D.SKILLS.map(function(s){ return '<option value="'+esc(s.n)+'">'+s.n+'</option>'; }).join("");
@@ -448,11 +635,29 @@
   document.addEventListener("click", function(e){
     var c = e.target.closest("[data-check]");
     if(c){
-      var on = S.checkIn(c.dataset.check);
+      lastChecks = Object.assign({}, S.checks(checkSession));
+      var on = S.checkIn(checkSession, c.dataset.check);
       var p = D.ROSTER.filter(function(x){ return x.id === c.dataset.check; })[0];
+      haptic();
       renderStaff();
       if(on && p.me) award(60, p.n.split(" ")[0] + " · +60 " + t("c.points"));
       else window.r2toast(p.n.split(" ")[0] + " · " + (on ? t("t.present") : t("t.in")));
+      return;
+    }
+    if(e.target.closest("#checkAll")){
+      lastChecks = Object.assign({}, S.checks(checkSession));
+      var all = {};
+      D.ROSTER.forEach(function(p){ all[p.id] = true; });
+      S.setChecks(checkSession, all);
+      haptic(18); renderStaff();
+      window.r2toast(D.ROSTER.length + " " + t("t.present").toLowerCase(), t("c.undo"), undoChecks);
+      return;
+    }
+    if(e.target.closest("#checkNone")){
+      lastChecks = Object.assign({}, S.checks(checkSession));
+      S.setChecks(checkSession, {});
+      haptic(18); renderStaff();
+      window.r2toast(t("t.clear"), t("c.undo"), undoChecks);
       return;
     }
     if(e.target.closest("#saveAssess")){
@@ -479,9 +684,28 @@
     }
   });
 
+  function undoChecks(){
+    if(!lastChecks) return;
+    S.setChecks(checkSession, lastChecks);
+    lastChecks = null;
+    renderStaff();
+  }
+
   document.addEventListener("input", function(e){
     if(e.target.id === "assessVal") $("#assessOut").textContent = parseFloat(e.target.value).toFixed(1);
     if(e.target.id === "barCode" && e.target.value.length >= 5) checkCode();
+    if(e.target.id === "rosterFind"){ rosterQuery = e.target.value; renderStaff(); }
+  });
+
+  document.addEventListener("change", function(e){
+    if(e.target.id === "checkSession"){ checkSession = e.target.value; rosterQuery = ""; 
+      var f = $("#rosterFind"); if(f) f.value = "";
+      renderStaff();
+    }
+  });
+
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Enter" && e.target.id === "barCode"){ e.preventDefault(); checkCode(); }
   });
 
   /* ---------------------------------------------------------------- kantine staff */
@@ -511,34 +735,157 @@
       '<button class="btn btn-primary" data-confirm="'+rec.code+'">'+t("k.hand")+'</button></div>';
   }
 
+  /* What the bar is still waiting on. Staff can confirm straight from here when the
+     player is standing in front of them and the camera is being difficult. */
+  var queueTimer;
+
+  function renderQueue(){
+    var card = $("#queueCard"), box = $("#queue");
+    if(!card || !box) return;
+    var live = liveCodes();
+    clearInterval(queueTimer);
+    card.hidden = false;
+    $("#queueCount").textContent = live.length;
+    if(!live.length){
+      box.innerHTML = '<p class="empty">'+t("k.queueEmpty")+'</p>';
+      return;
+    }
+    function paint(){
+      var now = Date.now(), rows = liveCodes();
+      if(rows.length !== live.length){ renderQueue(); return; }
+      box.innerHTML = rows.map(function(r){
+        var left = r.at + CODE_LIFE - now;
+        var m = Math.floor(left/60000), sec = Math.floor(left%60000/1000);
+        return '<button class="qrow" data-confirm="'+r.code+'">'+
+          '<span class="qcode">'+r.code+'</span>'+
+          '<span class="who">'+esc(r.item)+'<small>'+esc(D.PLAYER.name)+'</small></span>'+
+          '<span class="qleft">'+m+':'+(sec<10?"0":"")+sec+'</span></button>';
+      }).join("");
+    }
+    paint();
+    queueTimer = setInterval(paint, 1000);
+  }
+
+  /* ---------------------------------------------------------------- scanning */
+
+  var scanning = false;
+
+  function scanNote(){
+    var el = $("#scanNote");
+    if(!el) return;
+    if(!window.r2scan || !window.r2scan.hasCamera()) el.textContent = t("k.nocam");
+    else if(!window.r2scan.isSupported()) el.textContent = t("k.noScan");
+    else el.textContent = "";
+  }
+
+  function stopScan(){
+    scanning = false;
+    if(window.r2scan) window.r2scan.stop();
+    var w = $("#scanWrap");
+    if(w) w.hidden = true;
+    var b = $("#scanStart");
+    if(b) b.hidden = false;
+  }
+
+  function startScan(){
+    if(!window.r2scan) return;
+    if(!window.r2scan.isSupported()){
+      window.r2toast(window.r2scan.hasCamera() ? t("k.noScan") : t("k.nocam"));
+      var f = $("#barCode"); if(f) f.focus();
+      return;
+    }
+    var wrap = $("#scanWrap"), vid = $("#scanVideo");
+    wrap.hidden = false;
+    $("#scanStart").hidden = true;
+    scanning = true;
+
+    window.r2scan.start(vid, function(code){
+      haptic(24);
+      var input = $("#barCode");
+      if(input) input.value = code;
+      stopScan();
+      checkCode();
+      window.r2toast(t("k.scanned") + " · " + code);
+      var res = $("#barResult");
+      if(res) res.scrollIntoView({block:"nearest", behavior: calm ? "auto" : "smooth"});
+    }, function(reason){
+      stopScan();
+      window.r2toast(reason === "denied" ? t("k.denied")
+                   : reason === "nocamera" ? t("k.nocam") : t("k.noScan"));
+    }).then(function(){
+      var tb = $("#scanTorch");
+      if(tb) tb.hidden = !window.r2scan.canTorch();
+    }).catch(function(){});
+  }
+
+  document.addEventListener("click", function(e){
+    if(e.target.closest("#scanStart")){ startScan(); return; }
+    if(e.target.closest("#scanStop")){ stopScan(); return; }
+    var tb = e.target.closest("#scanTorch");
+    if(tb){
+      var on = tb.classList.toggle("on");
+      window.r2scan.setTorch(on).then(function(ok){ if(!ok) tb.classList.remove("on"); });
+      return;
+    }
+  });
+
   document.addEventListener("click", function(e){
     if(e.target.closest("#barCheck")){ checkCode(); return; }
     var cf = e.target.closest("[data-confirm]");
     if(cf){
       S.markRedeemed(cf.dataset.confirm);
-      renderHistory(); checkCode();
+      haptic(24);
+      renderHistory(); renderLive(); renderQueue(); checkCode();
       window.r2toast(t("k.confirmed"));
     }
   });
 
   /* ---------------------------------------------------------------- modal */
 
+  var lastFocus = null, scrollY = 0;
+
+  function focusables(){
+    return $$("button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])", $("#modal"))
+      .filter(function(el){ return !el.disabled && el.offsetParent !== null; });
+  }
+
   function modal(html){
+    lastFocus = document.activeElement;
     $("#modalBody").innerHTML = html;
     $("#modal").hidden = false;
-    document.body.style.overflow = "hidden";
+    /* position:fixed on the body instead of overflow:hidden, because iOS Safari
+       happily scrolls the page behind an overflow-hidden body. */
+    scrollY = window.scrollY;
+    document.body.classList.add("locked");
+    document.body.style.top = (-scrollY) + "px";
     $("#modalClose").focus();
   }
+
   function closeModal(){
+    if($("#modal").hidden) return;
     $("#modal").hidden = true;
-    document.body.style.overflow = "";
+    document.body.classList.remove("locked");
+    document.body.style.top = "";
+    window.scrollTo(0, scrollY);
     clearInterval(codeTimer);
+    if(lastFocus && lastFocus.focus) lastFocus.focus();
+    lastFocus = null;
   }
+
   document.addEventListener("click", function(e){
     if(e.target.closest("#modalClose") || e.target.id === "modal") closeModal();
   });
+
   document.addEventListener("keydown", function(e){
-    if(e.key === "Escape" && !$("#modal").hidden) closeModal();
+    if($("#modal").hidden) return;
+    if(e.key === "Escape"){ closeModal(); return; }
+    /* keep tab inside the dialog while it is open */
+    if(e.key !== "Tab") return;
+    var f = focusables();
+    if(!f.length) return;
+    var first = f[0], last = f[f.length-1];
+    if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
   });
 
   /* ---------------------------------------------------------------- academy switch */
@@ -577,6 +924,9 @@
     renderSquad();
     renderCoaches();
     renderStaff();
+    renderLive();
+    renderQueue();
+    scanNote();
     I.apply(document);
 
     var P = D.PLAYER;
@@ -592,13 +942,13 @@
   });
 
   document.addEventListener("click", function(e){
-    var r = e.target.closest("[data-role]");
+    var r = e.target.closest(".roles [data-role]");
     if(r) setRole(r.dataset.role);
   });
 
   I.set(S.all.lang || "en", true);
   document.body.dataset.role = role;
-  $$("[data-role]").forEach(function(b){ b.classList.toggle("on", b.dataset.role === role); });
+  $$(".roles [data-role]").forEach(function(b){ b.classList.toggle("on", b.dataset.role === role); });
 
   applyEdits();
   renderAll();

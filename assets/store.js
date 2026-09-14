@@ -19,7 +19,7 @@ window.r2store = (function(){
     drillsDone:  [],
     redemptions: [],          /* {code, item, cost, at, status} */
     rsvp:        {},          /* sessionId: "in" | "out" */
-    checkins:    {},          /* playerId: true, coach view */
+    checkins:    {},          /* sessionId: {playerId: true}, coach view */
     skillEdits:  {},          /* skill name: new score, coach view */
     weekDrills:  0
   };
@@ -90,11 +90,34 @@ window.r2store = (function(){
       return r;
     },
 
-    checkIn: function(playerId){
+    /* Check-ins hang off a session, not off the player, so Tuesday's list does not
+       arrive already ticked from Monday. Older saves kept one flat blob; migrate it
+       onto whichever session the app asks about first rather than dropping it. */
+    checks: function(sessionId){
       var c = club();
-      c.checkins[playerId] = !c.checkins[playerId];
+      if(!c.checkins || typeof c.checkins !== "object") c.checkins = {};
+      var flat = null;
+      for(var k in c.checkins){
+        if(c.checkins[k] === true){ flat = flat || {}; flat[k] = true; }
+      }
+      if(flat){
+        for(var k2 in flat) delete c.checkins[k2];
+        c.checkins[sessionId] = Object.assign(flat, c.checkins[sessionId] || {});
+        save();
+      }
+      if(!c.checkins[sessionId]) c.checkins[sessionId] = {};
+      return c.checkins[sessionId];
+    },
+    checked: function(sessionId, playerId){ return !!this.checks(sessionId)[playerId]; },
+    checkIn: function(sessionId, playerId){
+      var m = this.checks(sessionId);
+      if(m[playerId]) delete m[playerId]; else m[playerId] = true;
       save();
-      return c.checkins[playerId];
+      return !!m[playerId];
+    },
+    setChecks: function(sessionId, map){
+      club().checkins[sessionId] = map || {};
+      save();
     },
 
     setSkill: function(name, value){

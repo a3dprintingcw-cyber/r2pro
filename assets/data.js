@@ -113,6 +113,11 @@ window.R2 = (function(){
       eR:[186,106], wR:[208,132], eL:[92,114], wL:[76,90],
       kL:[100,216], aL:[88,268], kR:[148,214], aR:[166,264], ra:34}},
 
+    {k:"Chiquita", es:"low ball to the feet", part:"knees and wrist", v:5.6, pose:{
+      head:[114,84], sL:[92,118], sR:[138,116], hL:[102,192], hR:[134,192],
+      eR:[162,166], wR:[188,206], eL:[74,150], wL:[56,182],
+      kL:[76,234], aL:[92,276], kR:[164,232], aR:[150,274], ra:22}},
+
     {k:"Positioning", es:"posicionamiento", part:"core", v:7.4, pose:{
       head:[120,50], sL:[94,86], sR:[146,86], hL:[104,166], hR:[136,166],
       eR:[156,120], wR:[138,90], eL:[84,120], wL:[104,94],
