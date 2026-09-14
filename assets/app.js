@@ -210,11 +210,11 @@
     function openHand(wrist, dir, w){
       var palmEnd = add(wrist, dir, 7);
       var out = '<path d="'+limb([[wrist[0],wrist[1],w*1.05],[palmEnd[0],palmEnd[1],w*1.3]])+'"/>';
-      var fan = [[-30,8.5],[-11,10.5],[9,10],[28,8]];
+      var fan = [[-23,10],[-7,12],[8,11.5],[24,9.5]];
       fan.forEach(function(f){
         var d = rot(dir, f[0]);
         var tip = add(palmEnd, d, f[1]);
-        out += '<path d="'+limb([[palmEnd[0],palmEnd[1],4],[tip[0],tip[1],2.8]])+'"/>';
+        out += '<path d="'+limb([[palmEnd[0],palmEnd[1],4.4],[tip[0],tip[1],3]])+'"/>';
       });
       var td = rot(dir, -62), tip = add(palmEnd, td, 7.5);
       out += '<path d="'+limb([[wrist[0],wrist[1],5],[tip[0],tip[1],3.4]])+'"/>';
@@ -228,9 +228,9 @@
     /* a foot, pointing away from the body */
     function foot(ankle, hip){
       var away = ankle[0] >= hip[0] ? 1 : -1;
-      var d = [away*0.93, 0.36];
-      var m = add(ankle, d, 8), t = add(ankle, d, 16);
-      return '<path d="'+limb([[ankle[0],ankle[1]-2,12],[m[0],m[1]+2,12.5],[t[0],t[1]+3,8]])+'"/>';
+      var d = [away*0.62, 0.78];
+      var m = add(ankle, d, 7), t = add(ankle, d, 14);
+      return '<path d="'+limb([[ankle[0],ankle[1]-3,11],[m[0],m[1],11.5],[t[0],t[1],7.5]])+'"/>';
     }
 
     function draw(sk){
@@ -247,23 +247,24 @@
         [ms[0], ms[1]-3, sh*1.04],
         [chest[0], chest[1], sh*0.99],
         [waist[0], waist[1], sh*0.70],
-        [mh[0], mh[1]+4, hp*1.28]
+        [mh[0], mh[1]+2, hp*1.04]
       ])+'"/>';
 
       /* neck and trapezius */
       body += '<path d="'+limb([
         [p.head[0], p.head[1]+12, 15],
         [lerp([p.head[0],p.head[1]+12], ms, .6)[0], lerp([p.head[0],p.head[1]+12], ms, .6)[1], 19],
-        [ms[0], ms[1]+2, sh*0.82]
+        [ms[0], ms[1]+2, sh*0.60]
       ])+'"/>';
 
       /* head: skull into a narrower jaw */
       var hx = p.head[0], hy = p.head[1];
       body += '<path d="'+limb([
-        [hx, hy-14, 24],
-        [hx, hy-4, 32],
-        [hx, hy+8, 26],
-        [hx, hy+16, 15]
+        [hx, hy-19, 13],
+        [hx, hy-13, 27],
+        [hx, hy-3, 32],
+        [hx, hy+7, 28],
+        [hx, hy+15, 16]
       ])+'"/>';
 
       /* arms: shoulder, bicep, elbow, forearm belly, wrist */
@@ -271,7 +272,7 @@
         var s0=arm[0], e=arm[1], w=arm[2];
         var bicep = lerp(s0,e,.45), fore = lerp(e,w,.42);
         body += '<path d="'+limb([
-          [s0[0], s0[1], 23],
+          [s0[0], s0[1], 21],
           [bicep[0], bicep[1], 19.5],
           [e[0], e[1], 14.5]
         ])+'"/>';
@@ -289,13 +290,13 @@
         var h0=leg[0], k=leg[1], a0=leg[2];
         var quad = lerp(h0,k,.42), calf = lerp(k,a0,.36);
         body += '<path d="'+limb([
-          [h0[0], h0[1]-4, 32],
-          [quad[0], quad[1], 28],
-          [k[0], k[1], 19.5]
+          [h0[0], h0[1]-3, 26],
+          [quad[0], quad[1], 25],
+          [k[0], k[1], 18]
         ])+'"/>';
         body += '<path d="'+limb([
-          [k[0], k[1], 19.5],
-          [calf[0], calf[1], 20.5],
+          [k[0], k[1], 18],
+          [calf[0], calf[1], 19],
           [a0[0], a0[1], 11]
         ])+'"/>';
         body += foot(a0, h0);
