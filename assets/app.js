@@ -184,7 +184,7 @@
       /* torso */
       body += '<path d="'+taper([pin(ms,shSpan*1.02), pin(waist,shSpan*0.74), pin(mh,hipSpan*1.1)])+'"/>';
       /* neck */
-      body += '<path d="'+taper([pin(p.head,16), pin(ms,20)])+'"/>';
+      body += '<path d="'+taper([[p.head[0], p.head[1]+13, 15], pin(ms,21)])+'"/>';
       /* head */
       body += '<ellipse cx="'+p.head[0]+'" cy="'+p.head[1]+'" rx="16" ry="19"/>';
       /* front arm */
