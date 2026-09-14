@@ -83,18 +83,50 @@ window.R2 = (function(){
   var ATT = [1,1,0,1,1,1,1,0,1,1,1,1];
 
 
-  /* Where each skill lives on the body. Drawn by app.js as the second slide
-     of the skill profile card. Geometry is in the 0 0 360 314 viewBox.
-     dot = where the marker sits, ly = the label's baseline, side = which column. */
+  /* One pose per skill. Joints live in the 0 0 240 300 viewBox; app.js draws the
+     silhouette from them. head/sL/sR = head and shoulders, hL/hR = hips,
+     eR/wR = racket elbow and wrist, eL/wL = front arm, kL/aL = left knee and ankle,
+     ra = racket angle in degrees, ball = optional ball in the free hand. */
   var BODY = [
-    {k:"Match head",  v:5.2, side:"l", ly:70,  dot:[142,52],  seg:"head"},
-    {k:"Volley",      v:6.8, side:"l", ly:158, dot:[114,152], seg:"offarm"},
-    {k:"Serve",       v:6.0, side:"l", ly:22,  dot:[240,13],  seg:"racket"},
-    {k:"Víbora",      v:4.9, side:"r", ly:48,  dot:[222,47],  seg:"forearm"},
-    {k:"Bandeja",     v:6.4, side:"r", ly:86,  dot:[199,70],  seg:"uparm"},
-    {k:"Positioning", v:7.4, side:"r", ly:128, dot:[172,124], seg:"torso"},
-    {k:"Agility",     v:7.8, side:"r", ly:196, dot:[177,196], seg:"thighs"},
-    {k:"Wall exit",   v:7.1, side:"r", ly:252, dot:[182,246], seg:"shins"}
+    {k:"Víbora", es:"attacking slice smash", part:"racket forearm", v:4.9, pose:{
+      head:[112,46], sL:[92,82], sR:[136,78], hL:[102,166], hR:[134,166],
+      eR:[170,58], wR:[192,38], eL:[70,98], wL:[58,66],
+      kL:[92,216], aL:[84,268], kR:[142,214], aR:[154,266], ra:-50}},
+
+    {k:"Bandeja", es:"defensive smash", part:"shoulder", v:6.4, pose:{
+      head:[116,46], sL:[94,82], sR:[140,80], hL:[104,166], hR:[136,166],
+      eR:[178,68], wR:[204,52], eL:[74,102], wL:[62,72],
+      kL:[96,216], aL:[88,268], kR:[144,214], aR:[156,266], ra:-25}},
+
+    {k:"Volley", es:"volea", part:"front arm", v:6.8, pose:{
+      head:[118,48], sL:[96,84], sR:[140,84], hL:[104,168], hR:[136,168],
+      eR:[160,112], wR:[176,86], eL:[82,114], wL:[100,92],
+      kL:[92,214], aL:[80,266], kR:[146,214], aR:[160,266], ra:-18}},
+
+    {k:"Serve", es:"saque", part:"racket hand", v:6.0, pose:{
+      head:[118,44], sL:[96,80], sR:[140,80], hL:[104,166], hR:[136,166],
+      eR:[164,118], wR:[178,150], eL:[78,114], wL:[88,140],
+      kL:[98,214], aL:[92,268], kR:[140,212], aR:[150,266], ra:42, ball:[88,128]}},
+
+    {k:"Wall exit", es:"salida de pared", part:"feet and hips", v:7.1, pose:{
+      head:[128,52], sL:[110,88], sR:[152,84], hL:[110,168], hR:[140,166],
+      eR:[186,106], wR:[208,132], eL:[92,114], wL:[76,90],
+      kL:[100,216], aL:[88,268], kR:[148,214], aR:[166,264], ra:34}},
+
+    {k:"Positioning", es:"posicionamiento", part:"core", v:7.4, pose:{
+      head:[120,50], sL:[94,86], sR:[146,86], hL:[104,166], hR:[136,166],
+      eR:[156,120], wR:[138,90], eL:[84,120], wL:[104,94],
+      kL:[86,212], aL:[70,264], kR:[154,212], aR:[170,264], ra:-82}},
+
+    {k:"Agility", es:"footwork & speed", part:"legs", v:7.8, pose:{
+      head:[106,46], sL:[86,82], sR:[128,78], hL:[102,162], hR:[130,164],
+      eR:[162,100], wR:[184,76], eL:[62,112], wL:[52,144],
+      kL:[64,206], aL:[42,260], kR:[158,210], aR:[194,262], ra:-38}},
+
+    {k:"Match head", es:"decision making", part:"head", v:5.2, pose:{
+      head:[120,40], sL:[98,76], sR:[142,76], hL:[106,168], hR:[134,168],
+      eR:[154,122], wR:[162,166], eL:[88,122], wL:[82,164],
+      kL:[104,220], aL:[100,268], kR:[136,220], aR:[140,268], ra:74}}
   ];
 
   return {PLAYER:PLAYER, BODY:BODY, COACHES:COACHES, SKILLS:SKILLS, RADAR:RADAR, SHOP:SHOP, DRILLS:DRILLS, FEED:FEED, HISTORY:HISTORY, ATT:ATT};

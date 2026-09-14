@@ -151,60 +151,97 @@
     $("#radar").innerHTML = s;
   })();
 
-  (function bodyMap(){
-    var col = {};
-    D.BODY.forEach(function(b){ col[b.seg] = band(b.v).c; });
+  (function shotViewer(){
+    var figure = $("#bodyFig"), list = $("#bodyList"), cap = $("#bodyCap");
+    if(!figure) return;
 
-    function limb(d, c, w){
-      return '<path d="'+d+'" fill="none" stroke="'+c+'" stroke-width="'+(w||9)+
-             '" stroke-linecap="round" stroke-linejoin="round"/>';
+    var W = {uparm:20, forearm:14, hand:11, thigh:28, shin:19, ankle:12};
+
+    /* a tapered limb: walk the centre line, offset by half the width at each point */
+    function taper(pts){
+      var l = [], r = [];
+      for(var i=0;i<pts.length;i++){
+        var p = pts[i], prev = pts[i-1] || pts[i], next = pts[i+1] || pts[i];
+        var dx = next[0]-prev[0], dy = next[1]-prev[1];
+        var len = Math.sqrt(dx*dx + dy*dy) || 1;
+        var nx = -dy/len, ny = dx/len, h = p[2]/2;
+        l.push([p[0]+nx*h, p[1]+ny*h]);
+        r.unshift([p[0]-nx*h, p[1]-ny*h]);
+      }
+      return "M" + l.concat(r).map(function(q){ return q[0].toFixed(1)+","+q[1].toFixed(1); }).join(" L") + " Z";
     }
-    var s = '<svg viewBox="0 0 360 314" width="100%" role="img" aria-label="Body map: each rating placed where the shot is played from">';
+    function mid(a,b){ return [(a[0]+b[0])/2, (a[1]+b[1])/2]; }
+    function dist(a,b){ var dx=a[0]-b[0], dy=a[1]-b[1]; return Math.sqrt(dx*dx+dy*dy); }
+    function pin(p,w){ return [p[0],p[1],w]; }
+    function knob(p,r){ return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+(r/2).toFixed(1)+'"/>'; }
 
-    /* faint silhouette underneath, so uncoloured parts still read as a body */
-    s += '<g stroke="rgba(255,255,255,.07)" stroke-width="11" stroke-linecap="round" fill="none">'+
-         '<path d="M160 67 L160 80"/>'+
-         '</g>';
+    function draw(sk){
+      var p = sk.pose, c = band(sk.v).c;
+      var ms = mid(p.sL,p.sR), mh = mid(p.hL,p.hR), waist = mid(ms,mh);
+      var shSpan = dist(p.sL,p.sR), hipSpan = dist(p.hL,p.hR);
 
-    /* torso */
-    s += '<path d="M134 80 L186 80 L178 168 L142 168 Z" fill="'+col.torso+'" fill-opacity=".16" stroke="'+col.torso+'" stroke-width="2" stroke-linejoin="round"/>';
-    /* neck */
-    s += limb("M160 66 L160 81", "rgba(255,255,255,.22)", 9);
-    /* head */
-    s += '<circle cx="160" cy="48" r="19" fill="'+col.head+'" fill-opacity=".16" stroke="'+col.head+'" stroke-width="2.4"/>';
-    /* racket arm */
-    s += limb("M186 82 L212 58", col.uparm);
-    s += limb("M212 58 L232 36", col.forearm);
-    /* racket */
-    s += '<line x1="232" y1="36" x2="239" y2="28" stroke="'+col.racket+'" stroke-width="4" stroke-linecap="round"/>';
-    s += '<ellipse cx="245" cy="20" rx="10" ry="13" transform="rotate(-40 245 20)" fill="'+col.racket+'" fill-opacity=".16" stroke="'+col.racket+'" stroke-width="2.4"/>';
-    /* off arm */
-    s += limb("M134 82 L120 124 L114 152", col.offarm);
-    /* legs */
-    s += limb("M146 170 L140 220", col.thighs);
-    s += limb("M174 170 L180 220", col.thighs);
-    s += limb("M140 220 L136 266", col.shins);
-    s += limb("M180 220 L184 266", col.shins);
-    /* feet */
-    s += limb("M136 268 L124 273", "rgba(255,255,255,.22)", 7);
-    s += limb("M184 268 L196 273", "rgba(255,255,255,.22)", 7);
+      var body = "";
+      /* torso */
+      body += '<path d="'+taper([pin(ms,shSpan*1.02), pin(waist,shSpan*0.74), pin(mh,hipSpan*1.1)])+'"/>';
+      /* neck */
+      body += '<path d="'+taper([pin(p.head,16), pin(ms,20)])+'"/>';
+      /* head */
+      body += '<ellipse cx="'+p.head[0]+'" cy="'+p.head[1]+'" rx="16" ry="19"/>';
+      /* front arm */
+      body += '<path d="'+taper([pin(p.sL,W.uparm), pin(p.eL,W.forearm)])+'"/>';
+      body += '<path d="'+taper([pin(p.eL,W.forearm), pin(p.wL,W.hand)])+'"/>';
+      body += knob(p.sL,W.uparm) + knob(p.eL,W.forearm) + knob(p.wL,W.hand+3);
+      /* racket arm */
+      body += '<path d="'+taper([pin(p.sR,W.uparm), pin(p.eR,W.forearm)])+'"/>';
+      body += '<path d="'+taper([pin(p.eR,W.forearm), pin(p.wR,W.hand)])+'"/>';
+      body += knob(p.sR,W.uparm) + knob(p.eR,W.forearm) + knob(p.wR,W.hand+3);
+      /* legs */
+      [[p.hL,p.kL,p.aL],[p.hR,p.kR,p.aR]].forEach(function(leg){
+        body += '<path d="'+taper([pin(leg[0],W.thigh), pin(leg[1],W.shin)])+'"/>';
+        body += '<path d="'+taper([pin(leg[1],W.shin), pin(leg[2],W.ankle)])+'"/>';
+        body += knob(leg[1],W.shin);
+        body += '<ellipse cx="'+leg[2][0]+'" cy="'+(leg[2][1]+5)+'" rx="12" ry="5.5"/>';
+      });
 
-    /* leaders, markers and labels */
-    D.BODY.forEach(function(b){
-      var bd = band(b.v);
-      var left = b.side === "l";
-      var lx = left ? 92 : 246;
-      var tip = left ? lx + 6 : lx - 6;
-      s += '<line x1="'+b.dot[0]+'" y1="'+b.dot[1]+'" x2="'+tip+'" y2="'+(b.ly-4)+'" stroke="rgba(255,255,255,.18)" stroke-width="1"/>';
-      s += '<circle cx="'+b.dot[0]+'" cy="'+b.dot[1]+'" r="3.6" fill="'+bd.c+'" stroke="#0F2233" stroke-width="1.5"/>';
-      s += '<text x="'+lx+'" y="'+b.ly+'" text-anchor="'+(left?"end":"start")+'" font-family="'+MONO+'" font-size="9.5" letter-spacing=".07em" fill="#8FA6BC">'+
-           b.k.toUpperCase()+'</text>';
-      s += '<text x="'+lx+'" y="'+(b.ly+16)+'" text-anchor="'+(left?"end":"start")+'" font-family="Anton, sans-serif" font-size="17" fill="'+bd.c+'">'+
-           b.v.toFixed(1)+'</text>';
+      /* racket, drawn along the wrist angle */
+      var a = p.ra * Math.PI/180;
+      var gx = p.wR[0] + 11*Math.cos(a), gy = p.wR[1] + 11*Math.sin(a);
+      var rx = p.wR[0] + 26*Math.cos(a), ry = p.wR[1] + 26*Math.sin(a);
+      var racket = '<path d="'+taper([pin(p.wR,7), pin([gx,gy],6)])+'" fill="'+c+'"/>'+
+        '<ellipse cx="'+rx.toFixed(1)+'" cy="'+ry.toFixed(1)+'" rx="9.5" ry="12.5" '+
+        'transform="rotate('+(p.ra+90)+' '+rx.toFixed(1)+' '+ry.toFixed(1)+')" '+
+        'fill="'+c+'" fill-opacity=".22" stroke="'+c+'" stroke-width="3"/>';
+
+      var ball = p.ball ? '<circle cx="'+p.ball[0]+'" cy="'+p.ball[1]+'" r="6" fill="#EAF2F8" fill-opacity=".9"/>' : "";
+
+      figure.innerHTML =
+        '<svg viewBox="0 0 240 300" role="img" aria-label="'+sk.k+', played at '+sk.v.toFixed(1)+' out of 10">'+
+        '<ellipse cx="120" cy="286" rx="74" ry="8" fill="#000" fill-opacity=".28"/>'+
+        '<g fill="'+c+'" fill-opacity=".88">'+body+'</g>'+
+        racket + ball +
+        '</svg>';
+
+      cap.innerHTML = '<div class="bk">'+sk.k+'</div>'+
+        '<div class="be">'+sk.es+' &middot; '+sk.part+'</div>'+
+        '<div class="bv" style="color:'+c+'">'+sk.v.toFixed(1)+'<small>/10</small></div>';
+    }
+
+    list.innerHTML = D.BODY.map(function(sk,i){
+      var c = band(sk.v).c;
+      return '<button class="brow'+(i===0?" on":"")+'" data-shot="'+i+'">'+
+        '<span class="bd" style="background:'+c+'"></span>'+
+        '<span class="bn">'+sk.k+'<small>'+sk.part+'</small></span>'+
+        '<span class="bs" style="color:'+c+'">'+sk.v.toFixed(1)+'</span></button>';
+    }).join("");
+
+    list.addEventListener("click", function(e){
+      var b = e.target.closest("[data-shot]");
+      if(!b) return;
+      list.querySelectorAll("[data-shot]").forEach(function(x){ x.classList.toggle("on", x === b); });
+      draw(D.BODY[+b.dataset.shot]);
     });
 
-    s += '</svg>';
-    $("#bodymap").innerHTML = s;
+    draw(D.BODY[0]);
   })();
 
   /* carousel: segmented buttons plus native swipe / trackpad scroll */

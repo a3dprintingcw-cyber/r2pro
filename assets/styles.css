@@ -354,3 +354,35 @@ section.band:last-of-type{border-bottom:0}
 .scale i{width:8px;height:8px;border-radius:2px;display:block}
 .swipe{display:flex;align-items:center;gap:6px;white-space:nowrap}
 @media (max-width:680px){ .pfoot{flex-direction:column;align-items:flex-start;gap:8px} }
+
+/* ---------- body map slide: a pose per shot ---------- */
+.bmap{
+  display:grid;grid-template-columns:minmax(140px,1fr) minmax(176px,.95fr);
+  gap:14px;align-items:center;padding:4px 2px;
+}
+.bstage{display:flex;flex-direction:column;gap:6px;min-width:0}
+.bfig svg{width:100%;height:auto;display:block;max-height:280px;margin:0 auto}
+.bcap{text-align:center}
+.bcap .bk{font-family:var(--f-display);font-size:21px;text-transform:uppercase;letter-spacing:.01em}
+.bcap .be{font-family:var(--f-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.bcap .bv{font-family:var(--f-display);font-size:34px;line-height:1;margin-top:6px}
+.bcap .bv small{font-family:var(--f-body);font-size:12px;font-weight:500;color:var(--muted)}
+
+.blist{display:flex;flex-direction:column;gap:1px;min-width:0}
+.brow{
+  display:grid;grid-template-columns:9px 1fr auto;gap:10px;align-items:center;
+  padding:6px 9px;border-radius:var(--r-s);text-align:left;width:100%;
+  border:1px solid transparent;transition:background .14s ease,border-color .14s ease;
+}
+.brow:hover{background:rgba(255,255,255,.06)}
+.brow.on{background:rgba(255,255,255,.07);border-color:var(--line-2)}
+.bd{width:9px;height:9px;border-radius:50%}
+.bn{font-size:13px;font-weight:500;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.bn small{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:400}
+.bs{font-family:var(--f-display);font-size:19px;font-variant-numeric:tabular-nums;line-height:1}
+.pslide{display:flex;align-items:center}
+.pslide > *{width:100%}
+@media (max-width:560px){
+  .bmap{grid-template-columns:1fr;gap:10px}
+  .bfig svg{max-height:220px}
+}
