@@ -187,6 +187,15 @@
       return d + "Z";
     }
 
+    /* a semicircular end cap, so limbs finish round instead of pointed */
+    function cap(centre, dir, r){
+      var a = Math.atan2(dir[1], dir[0]);
+      return [62, 31, 0, -31, -62].map(function(deg){
+        var t = a + deg*Math.PI/180;
+        return [centre[0] + Math.cos(t)*r, centre[1] + Math.sin(t)*r];
+      });
+    }
+
     /* a limb: centre line with a width at each waypoint, rounded at both ends */
     function limb(way){
       var L = [], R = [], n = way.length;
@@ -201,9 +210,10 @@
       }
       var dEnd   = unit([way[n-2][0],way[n-2][1]], [way[n-1][0],way[n-1][1]]);
       var dStart = unit([way[1][0],way[1][1]], [way[0][0],way[0][1]]);
-      var cap1 = add([way[n-1][0],way[n-1][1]], dEnd,   way[n-1][2]/2 * 0.92);
-      var cap2 = add([way[0][0],way[0][1]],     dStart, way[0][2]/2 * 0.92);
-      return smooth(L.concat([cap1], R, [cap2]));
+      return smooth(L
+        .concat(cap([way[n-1][0],way[n-1][1]], dEnd,   way[n-1][2]/2))
+        .concat(R)
+        .concat(cap([way[0][0],way[0][1]],     dStart, way[0][2]/2)));
     }
 
     /* an open hand: palm plus four fingers and a thumb */
@@ -259,11 +269,10 @@
 
       /* head: skull into a narrower jaw */
       var hx = p.head[0], hy = p.head[1];
+      body += '<ellipse cx="'+hx+'" cy="'+(hy-2)+'" rx="16.5" ry="18"/>';
       body += '<path d="'+limb([
-        [hx, hy-19, 13],
-        [hx, hy-13, 27],
-        [hx, hy-3, 32],
-        [hx, hy+7, 28],
+        [hx, hy+2, 29],
+        [hx, hy+9, 25],
         [hx, hy+15, 16]
       ])+'"/>';
 
