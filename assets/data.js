@@ -129,5 +129,69 @@ window.R2 = (function(){
       kL:[104,220], aL:[100,268], kR:[136,220], aR:[140,268], ra:74}}
   ];
 
-  return {PLAYER:PLAYER, BODY:BODY, COACHES:COACHES, SKILLS:SKILLS, RADAR:RADAR, SHOP:SHOP, DRILLS:DRILLS, FEED:FEED, HISTORY:HISTORY, ATT:ATT};
+  /* Sessions are generated from today so the prototype never shows a stale week.
+     Squad trains Tuesday and Thursday, camp on Saturday, privates on request. */
+  var SCHEDULE = (function(){
+    var out = [], now = new Date(), plan = [
+      {dow:2, h:17, m:0,  dur:90, kind:"Squad training", court:"Court 3, Jan Thiel",  coach:"Rafa Montoya",    cap:8,  taken:5, pts:60, note:"Bandeja block, bring the blue grip"},
+      {dow:4, h:17, m:0,  dur:90, kind:"Squad training", court:"Court 1, Jan Thiel",  coach:"Rafa Montoya",    cap:8,  taken:8, pts:60, note:"Match play, four courts running"},
+      {dow:6, h:9,  m:0,  dur:180,kind:"Camp day",       court:"Zeelandia, all courts",coach:"Kevin Martina",  cap:24, taken:17,pts:100,note:"Bring water, sunblock and a second shirt"},
+      {dow:1, h:18, m:30, dur:60, kind:"Private lesson", court:"Court 2, Jan Thiel",  coach:"Lisandra Cova",   cap:1,  taken:0, pts:40, note:"Wall exits, booked by you"}
+    ];
+    plan.forEach(function(p, pi){
+      for(var w=0; w<3; w++){
+        var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), p.h, p.m, 0, 0);
+        var shift = (p.dow - d.getDay() + 7) % 7;
+        d.setDate(d.getDate() + shift + w*7);
+        if(d < now) continue;
+        out.push({
+          id:   "s" + pi + "w" + w,
+          date: d,
+          end:  new Date(d.getTime() + p.dur*60000),
+          kind: p.kind, court: p.court, coach: p.coach,
+          cap:  p.cap, taken: p.taken, pts: p.pts, note: p.note
+        });
+      }
+    });
+    return out.sort(function(a,b){ return a.date - b.date; }).slice(0, 7);
+  })();
+
+  /* the squad, used for the standings and for the coach check-in sheet */
+  var ROSTER = [
+    {id:"p1", i:"ASC", n:"Adrian Silva da Costa", me:true, pts:1340, streak:11, rating:3.25, group:"Squad A"},
+    {id:"p2", i:"NV",  n:"Naomi Vrolijk",         pts:1985, streak:14, rating:3.75, group:"Squad A"},
+    {id:"p3", i:"GH",  n:"Gio Hernandez",         pts:1610, streak:6,  rating:3.50, group:"Squad A"},
+    {id:"p4", i:"TB",  n:"Thiago Bonifacio",      pts:1275, streak:9,  rating:3.25, group:"Squad A"},
+    {id:"p5", i:"SK",  n:"Saskia Koeiman",        pts:1180, streak:4,  rating:3.00, group:"Squad A"},
+    {id:"p6", i:"RJ",  n:"Ravi Jansen",           pts:940,  streak:2,  rating:3.00, group:"Squad B"},
+    {id:"p7", i:"MD",  n:"Mireille Daal",         pts:865,  streak:7,  rating:2.75, group:"Squad B"},
+    {id:"p8", i:"EC",  n:"Elian Croes",           pts:720,  streak:1,  rating:2.75, group:"Squad B"}
+  ];
+
+  var BADGES = [
+    {ic:"🔥", n:"Ten in a row",      d:"Ten squad sessions without missing one",      got:true},
+    {ic:"🌅", n:"Never late",        d:"Twenty on-time check-ins",                    got:true},
+    {ic:"🧱", n:"Wall rat",          d:"Fifteen home drills completed",               got:true},
+    {ic:"🤝", n:"Recruiter",         d:"Brought a friend who joined the academy",     got:true},
+    {ic:"🏆", n:"Club tournament",   d:"Played the club tournament",                  got:false},
+    {ic:"📈", n:"Level 3.50",        d:"Reach an R2 rating of 3.50",                  got:false},
+    {ic:"🌞", n:"Camp week",         d:"Every day of a holiday camp",                 got:false},
+    {ic:"🎯", n:"Sharp víbora",      d:"Score 6.0 or better on the víbora",           got:false}
+  ];
+
+  /* the club sets these rules; they drive the points engine */
+  var EARN = [
+    {k:"Training attended", v:50},
+    {k:"On time",           v:10},
+    {k:"Camp day",          v:100},
+    {k:"Home drill",        v:15},
+    {k:"Bring a friend",    v:150},
+    {k:"Club tournament",   v:200}
+  ];
+
+  DRILLS.forEach(function(d, i){ d.id = "d" + i; });
+
+  return {PLAYER:PLAYER, BODY:BODY, COACHES:COACHES, SKILLS:SKILLS, RADAR:RADAR, SHOP:SHOP,
+          DRILLS:DRILLS, FEED:FEED, HISTORY:HISTORY, ATT:ATT,
+          SCHEDULE:SCHEDULE, ROSTER:ROSTER, BADGES:BADGES, EARN:EARN};
 })();
