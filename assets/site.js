@@ -106,9 +106,31 @@
     });
   });
 
+  /* A cached app shell that never refreshes is worse than no cache at all: players
+     keep seeing last week's build and think the app is broken. When a new service
+     worker takes over, reload once so the fresh files are actually the ones running.
+     Guarded on controller and on a flag, so a first install cannot loop. */
   if("serviceWorker" in navigator && location.protocol !== "file:"){
+    var reloading = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function(){
+      if(reloading) return;
+      reloading = true;
+      location.reload();
+    });
     window.addEventListener("load", function(){
-      navigator.serviceWorker.register("sw.js").catch(function(){});
+      navigator.serviceWorker.register("sw.js").then(function(reg){
+        /* catch a worker that installed while the tab was closed */
+        if(reg.waiting && navigator.serviceWorker.controller) reg.waiting.postMessage("skip");
+        reg.addEventListener("updatefound", function(){
+          var sw = reg.installing;
+          if(!sw) return;
+          sw.addEventListener("statechange", function(){
+            if(sw.state === "installed" && navigator.serviceWorker.controller) sw.postMessage("skip");
+          });
+        });
+        /* and look for a new build each time the app is opened */
+        reg.update().catch(function(){});
+      }).catch(function(){});
     });
   }
 
