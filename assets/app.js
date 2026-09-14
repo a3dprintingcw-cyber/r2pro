@@ -188,7 +188,7 @@
     }
 
     /* a semicircular end cap, so limbs finish round instead of pointed */
-    function cap(centre, dir, r){
+    function endCap(centre, dir, r){
       var a = Math.atan2(dir[1], dir[0]);
       return [62, 31, 0, -31, -62].map(function(deg){
         var t = a + deg*Math.PI/180;
@@ -211,9 +211,9 @@
       var dEnd   = unit([way[n-2][0],way[n-2][1]], [way[n-1][0],way[n-1][1]]);
       var dStart = unit([way[1][0],way[1][1]], [way[0][0],way[0][1]]);
       return smooth(L
-        .concat(cap([way[n-1][0],way[n-1][1]], dEnd,   way[n-1][2]/2))
+        .concat(endCap([way[n-1][0],way[n-1][1]], dEnd,   way[n-1][2]/2))
         .concat(R)
-        .concat(cap([way[0][0],way[0][1]],     dStart, way[0][2]/2)));
+        .concat(endCap([way[0][0],way[0][1]],     dStart, way[0][2]/2)));
     }
 
     /* an open hand: palm plus four fingers and a thumb */
