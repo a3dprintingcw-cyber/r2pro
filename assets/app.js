@@ -155,69 +155,170 @@
     var figure = $("#bodyFig"), list = $("#bodyList"), cap = $("#bodyCap");
     if(!figure) return;
 
-    var W = {uparm:20, forearm:14, hand:11, thigh:28, shin:19, ankle:12};
+    /* ---- colour helpers ---- */
+    function rgb(h){ return [parseInt(h.substr(1,2),16), parseInt(h.substr(3,2),16), parseInt(h.substr(5,2),16)]; }
+    function hex(a){ return "#" + a.map(function(v){ return ("0"+Math.max(0,Math.min(255,Math.round(v))).toString(16)).slice(-2); }).join(""); }
+    function mix(h1,h2,t){ var a=rgb(h1), b=rgb(h2); return hex([0,1,2].map(function(i){ return a[i]+(b[i]-a[i])*t; })); }
+    var lighten = function(c,t){ return mix(c,"#FFFFFF",t); };
+    var darken  = function(c,t){ return mix(c,"#07121D",t); };
 
-    /* a tapered limb: walk the centre line, offset by half the width at each point */
-    function taper(pts){
-      var l = [], r = [];
-      for(var i=0;i<pts.length;i++){
-        var p = pts[i], prev = pts[i-1] || pts[i], next = pts[i+1] || pts[i];
-        var dx = next[0]-prev[0], dy = next[1]-prev[1];
-        var len = Math.sqrt(dx*dx + dy*dy) || 1;
-        var nx = -dy/len, ny = dx/len, h = p[2]/2;
-        l.push([p[0]+nx*h, p[1]+ny*h]);
-        r.unshift([p[0]-nx*h, p[1]-ny*h]);
-      }
-      return "M" + l.concat(r).map(function(q){ return q[0].toFixed(1)+","+q[1].toFixed(1); }).join(" L") + " Z";
+    /* ---- geometry helpers ---- */
+    function unit(a,b){
+      var dx=b[0]-a[0], dy=b[1]-a[1], l=Math.sqrt(dx*dx+dy*dy)||1;
+      return [dx/l, dy/l];
     }
-    function mid(a,b){ return [(a[0]+b[0])/2, (a[1]+b[1])/2]; }
-    function dist(a,b){ var dx=a[0]-b[0], dy=a[1]-b[1]; return Math.sqrt(dx*dx+dy*dy); }
-    function pin(p,w){ return [p[0],p[1],w]; }
-    function knob(p,r){ return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+(r/2).toFixed(1)+'"/>'; }
+    function add(p,d,k){ return [p[0]+d[0]*k, p[1]+d[1]*k]; }
+    function lerp(a,b,t){ return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t]; }
+    function rot(d,deg){
+      var r=deg*Math.PI/180, c=Math.cos(r), s=Math.sin(r);
+      return [d[0]*c - d[1]*s, d[0]*s + d[1]*c];
+    }
+    function n2(v){ return v.toFixed(1); }
+
+    /* closed Catmull-Rom through the outline points, so edges curve like a body */
+    function smooth(p){
+      var n = p.length, d = "M" + n2(p[0][0]) + "," + n2(p[0][1]);
+      for(var i=0;i<n;i++){
+        var p0=p[(i-1+n)%n], p1=p[i], p2=p[(i+1)%n], p3=p[(i+2)%n];
+        var c1=[p1[0]+(p2[0]-p0[0])/6, p1[1]+(p2[1]-p0[1])/6];
+        var c2=[p2[0]-(p3[0]-p1[0])/6, p2[1]-(p3[1]-p1[1])/6];
+        d += " C"+n2(c1[0])+","+n2(c1[1])+" "+n2(c2[0])+","+n2(c2[1])+" "+n2(p2[0])+","+n2(p2[1]);
+      }
+      return d + "Z";
+    }
+
+    /* a limb: centre line with a width at each waypoint, rounded at both ends */
+    function limb(way){
+      var L = [], R = [], n = way.length;
+      for(var i=0;i<n;i++){
+        var p = way[i];
+        var prev = way[i-1] || way[i], next = way[i+1] || way[i];
+        var dx = next[0]-prev[0], dy = next[1]-prev[1];
+        var len = Math.sqrt(dx*dx+dy*dy) || 1;
+        var nx = -dy/len, ny = dx/len, h = p[2]/2;
+        L.push([p[0]+nx*h, p[1]+ny*h]);
+        R.unshift([p[0]-nx*h, p[1]-ny*h]);
+      }
+      var dEnd   = unit([way[n-2][0],way[n-2][1]], [way[n-1][0],way[n-1][1]]);
+      var dStart = unit([way[1][0],way[1][1]], [way[0][0],way[0][1]]);
+      var cap1 = add([way[n-1][0],way[n-1][1]], dEnd,   way[n-1][2]/2 * 0.92);
+      var cap2 = add([way[0][0],way[0][1]],     dStart, way[0][2]/2 * 0.92);
+      return smooth(L.concat([cap1], R, [cap2]));
+    }
+
+    /* an open hand: palm plus four fingers and a thumb */
+    function openHand(wrist, dir, w){
+      var palmEnd = add(wrist, dir, 7);
+      var out = '<path d="'+limb([[wrist[0],wrist[1],w*1.05],[palmEnd[0],palmEnd[1],w*1.3]])+'"/>';
+      var fan = [[-30,8.5],[-11,10.5],[9,10],[28,8]];
+      fan.forEach(function(f){
+        var d = rot(dir, f[0]);
+        var tip = add(palmEnd, d, f[1]);
+        out += '<path d="'+limb([[palmEnd[0],palmEnd[1],4],[tip[0],tip[1],2.8]])+'"/>';
+      });
+      var td = rot(dir, -62), tip = add(palmEnd, td, 7.5);
+      out += '<path d="'+limb([[wrist[0],wrist[1],5],[tip[0],tip[1],3.4]])+'"/>';
+      return out;
+    }
+    /* a closed fist on the grip */
+    function fist(wrist, dir, w){
+      var a = add(wrist, dir, 5), b = add(wrist, dir, 10);
+      return '<path d="'+limb([[wrist[0],wrist[1],w*1.1],[a[0],a[1],w*1.45],[b[0],b[1],w*1.0]])+'"/>';
+    }
+    /* a foot, pointing away from the body */
+    function foot(ankle, hip){
+      var away = ankle[0] >= hip[0] ? 1 : -1;
+      var d = [away*0.93, 0.36];
+      var m = add(ankle, d, 8), t = add(ankle, d, 16);
+      return '<path d="'+limb([[ankle[0],ankle[1]-2,12],[m[0],m[1]+2,12.5],[t[0],t[1]+3,8]])+'"/>';
+    }
 
     function draw(sk){
       var p = sk.pose, c = band(sk.v).c;
-      var ms = mid(p.sL,p.sR), mh = mid(p.hL,p.hR), waist = mid(ms,mh);
-      var shSpan = dist(p.sL,p.sR), hipSpan = dist(p.hL,p.hR);
+      var ms = lerp(p.sL, p.sR, .5), mh = lerp(p.hL, p.hR, .5);
+      var chest = lerp(ms, mh, .28), waist = lerp(ms, mh, .62);
+      function span(a,b){ var dx=a[0]-b[0], dy=a[1]-b[1]; return Math.sqrt(dx*dx+dy*dy); }
+      var sh = span(p.sL,p.sR), hp = span(p.hL,p.hR);
 
       var body = "";
-      /* torso */
-      body += '<path d="'+taper([pin(ms,shSpan*1.02), pin(waist,shSpan*0.74), pin(mh,hipSpan*1.1)])+'"/>';
-      /* neck */
-      body += '<path d="'+taper([[p.head[0], p.head[1]+13, 15], pin(ms,21)])+'"/>';
-      /* head */
-      body += '<ellipse cx="'+p.head[0]+'" cy="'+p.head[1]+'" rx="16" ry="19"/>';
-      /* front arm */
-      body += '<path d="'+taper([pin(p.sL,W.uparm), pin(p.eL,W.forearm)])+'"/>';
-      body += '<path d="'+taper([pin(p.eL,W.forearm), pin(p.wL,W.hand)])+'"/>';
-      body += knob(p.sL,W.uparm) + knob(p.eL,W.forearm) + knob(p.wL,W.hand+3);
-      /* racket arm */
-      body += '<path d="'+taper([pin(p.sR,W.uparm), pin(p.eR,W.forearm)])+'"/>';
-      body += '<path d="'+taper([pin(p.eR,W.forearm), pin(p.wR,W.hand)])+'"/>';
-      body += knob(p.sR,W.uparm) + knob(p.eR,W.forearm) + knob(p.wR,W.hand+3);
-      /* legs */
-      [[p.hL,p.kL,p.aL],[p.hR,p.kR,p.aR]].forEach(function(leg){
-        body += '<path d="'+taper([pin(leg[0],W.thigh), pin(leg[1],W.shin)])+'"/>';
-        body += '<path d="'+taper([pin(leg[1],W.shin), pin(leg[2],W.ankle)])+'"/>';
-        body += knob(leg[1],W.shin);
-        body += '<ellipse cx="'+leg[2][0]+'" cy="'+(leg[2][1]+5)+'" rx="12" ry="5.5"/>';
+
+      /* torso: shoulders, chest, waist, hips */
+      body += '<path d="'+limb([
+        [ms[0], ms[1]-3, sh*1.04],
+        [chest[0], chest[1], sh*0.99],
+        [waist[0], waist[1], sh*0.70],
+        [mh[0], mh[1]+4, hp*1.28]
+      ])+'"/>';
+
+      /* neck and trapezius */
+      body += '<path d="'+limb([
+        [p.head[0], p.head[1]+12, 15],
+        [lerp([p.head[0],p.head[1]+12], ms, .6)[0], lerp([p.head[0],p.head[1]+12], ms, .6)[1], 19],
+        [ms[0], ms[1]+2, sh*0.82]
+      ])+'"/>';
+
+      /* head: skull into a narrower jaw */
+      var hx = p.head[0], hy = p.head[1];
+      body += '<path d="'+limb([
+        [hx, hy-14, 24],
+        [hx, hy-4, 32],
+        [hx, hy+8, 26],
+        [hx, hy+16, 15]
+      ])+'"/>';
+
+      /* arms: shoulder, bicep, elbow, forearm belly, wrist */
+      [[p.sL,p.eL,p.wL,"off"],[p.sR,p.eR,p.wR,"racket"]].forEach(function(arm){
+        var s0=arm[0], e=arm[1], w=arm[2];
+        var bicep = lerp(s0,e,.45), fore = lerp(e,w,.42);
+        body += '<path d="'+limb([
+          [s0[0], s0[1], 23],
+          [bicep[0], bicep[1], 19.5],
+          [e[0], e[1], 14.5]
+        ])+'"/>';
+        body += '<path d="'+limb([
+          [e[0], e[1], 14.5],
+          [fore[0], fore[1], 15],
+          [w[0], w[1], 9.5]
+        ])+'"/>';
+        var d = unit(e,w);
+        body += arm[3] === "racket" ? fist(w,d,9.5) : openHand(w,d,9.5);
       });
 
-      /* racket, drawn along the wrist angle */
-      var a = p.ra * Math.PI/180;
-      var gx = p.wR[0] + 11*Math.cos(a), gy = p.wR[1] + 11*Math.sin(a);
-      var rx = p.wR[0] + 26*Math.cos(a), ry = p.wR[1] + 26*Math.sin(a);
-      var racket = '<path d="'+taper([pin(p.wR,7), pin([gx,gy],6)])+'" fill="'+c+'"/>'+
-        '<ellipse cx="'+rx.toFixed(1)+'" cy="'+ry.toFixed(1)+'" rx="9.5" ry="12.5" '+
-        'transform="rotate('+(p.ra+90)+' '+rx.toFixed(1)+' '+ry.toFixed(1)+')" '+
-        'fill="'+c+'" fill-opacity=".22" stroke="'+c+'" stroke-width="3"/>';
+      /* legs: hip, quad, knee, calf, ankle */
+      [[p.hL,p.kL,p.aL],[p.hR,p.kR,p.aR]].forEach(function(leg){
+        var h0=leg[0], k=leg[1], a0=leg[2];
+        var quad = lerp(h0,k,.42), calf = lerp(k,a0,.36);
+        body += '<path d="'+limb([
+          [h0[0], h0[1]-4, 32],
+          [quad[0], quad[1], 28],
+          [k[0], k[1], 19.5]
+        ])+'"/>';
+        body += '<path d="'+limb([
+          [k[0], k[1], 19.5],
+          [calf[0], calf[1], 20.5],
+          [a0[0], a0[1], 11]
+        ])+'"/>';
+        body += foot(a0, h0);
+      });
 
-      var ball = p.ball ? '<circle cx="'+p.ball[0]+'" cy="'+p.ball[1]+'" r="6" fill="#EAF2F8" fill-opacity=".9"/>' : "";
+      /* racket along the wrist angle */
+      var ang = p.ra * Math.PI/180;
+      var grip = [p.wR[0] + 13*Math.cos(ang), p.wR[1] + 13*Math.sin(ang)];
+      var head = [p.wR[0] + 29*Math.cos(ang), p.wR[1] + 29*Math.sin(ang)];
+      var racket =
+        '<path d="'+limb([[p.wR[0],p.wR[1],7],[grip[0],grip[1],6.4]])+'" fill="'+lighten(c,.2)+'"/>'+
+        '<ellipse cx="'+n2(head[0])+'" cy="'+n2(head[1])+'" rx="10" ry="13" '+
+        'transform="rotate('+(p.ra+90)+' '+n2(head[0])+' '+n2(head[1])+')" '+
+        'fill="none" stroke="'+c+'" stroke-width="3.6"/>';
+
+      var ball = p.ball
+        ? '<circle cx="'+p.ball[0]+'" cy="'+p.ball[1]+'" r="6.5" fill="#F2FF7A" stroke="'+darken(c,.4)+'" stroke-width="1.4"/>'
+        : "";
 
       figure.innerHTML =
-        '<svg viewBox="0 0 240 300" role="img" aria-label="'+sk.k+', played at '+sk.v.toFixed(1)+' out of 10">'+
-        '<ellipse cx="120" cy="286" rx="74" ry="8" fill="#000" fill-opacity=".28"/>'+
-        '<g fill="'+c+'" fill-opacity=".88">'+body+'</g>'+
+        '<svg viewBox="0 0 240 300" role="img" aria-label="'+sk.k+', rated '+sk.v.toFixed(1)+' out of 10">'+
+        '<ellipse cx="120" cy="287" rx="68" ry="7" fill="#000" fill-opacity=".25"/>'+
+        '<g fill="'+c+'">'+body+'</g>'+
         racket + ball +
         '</svg>';
 
