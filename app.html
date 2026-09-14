@@ -71,6 +71,7 @@
       </div>
 
       <div class="next" id="nextWrap"></div>
+      <button class="nba" id="nba" hidden></button>
 
       <div class="tiles">
         <div class="tile rate"><div class="lab" data-i18n="d.rating">R2 rating</div><div class="val">3.25</div><div class="delta">&uarr; 0.25</div></div>
@@ -165,6 +166,8 @@
         <p data-i18n="p.sub">Earn on court, spend at the bar.</p>
       </div>
 
+      <div class="livecode" id="liveCode" hidden></div>
+
       <div class="balance">
         <div>
           <div class="lab" data-i18n="p.balance">Your balance</div>
@@ -235,7 +238,14 @@
 
       <div class="two">
         <div class="card">
-          <div class="card-hd"><h3 data-i18n="t.roster">Today's check-in</h3><span class="chip sea">Court 3, 17:00</span></div>
+          <div class="card-hd"><h3 data-i18n="t.roster">Today's check-in</h3><span class="chip sea" id="checkCount">0</span></div>
+          <label class="field"><span data-i18n="t.session">Session</span><select id="checkSession"></select></label>
+          <div class="roster-tools">
+            <input type="search" id="rosterFind" class="find" autocomplete="off" spellcheck="false"
+                   data-i18n-attr="placeholder:t.find" placeholder="Find a player">
+            <button class="btn btn-ghost btn-sm" id="checkAll" data-i18n="t.all">All in</button>
+            <button class="btn btn-ghost btn-sm" id="checkNone" data-i18n="t.clear">Clear</button>
+          </div>
           <div class="roster" id="roster"></div>
         </div>
 
@@ -275,15 +285,38 @@
     <section class="view" id="v-bar">
       <div class="view-head">
         <h2 data-i18n="k.title">Kantine staff</h2>
-        <p data-i18n="k.sub">Type the code from the player's screen to confirm it.</p>
+        <p data-i18n="k.sub">Scan the player's code, or type it. Confirm and the drink is theirs.</p>
       </div>
       <div class="card bar-card">
+        <div class="scanwrap" id="scanWrap" hidden>
+          <video id="scanVideo" playsinline muted></video>
+          <div class="scanframe" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <div class="scanbar">
+            <button class="btn btn-ghost btn-sm" id="scanStop" data-i18n="k.scanStop">Stop</button>
+            <button class="btn btn-ghost btn-sm" id="scanTorch" hidden data-i18n="k.torch">Light</button>
+          </div>
+          <p class="scanhint" id="scanHint" data-i18n="k.scanHint">Point at the code on the player's phone.</p>
+        </div>
+
+        <button class="btn btn-primary btn-scan" id="scanStart">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8V5.5A1.5 1.5 0 0 1 4.5 4H7M17 4h2.5A1.5 1.5 0 0 1 21 5.5V8M21 16v2.5a1.5 1.5 0 0 1-1.5 1.5H17M7 20H4.5A1.5 1.5 0 0 1 3 18.5V16M6 12h12"/></svg>
+          <span data-i18n="k.scan">Scan the code</span>
+        </button>
+
+        <div class="or"><span data-i18n="k.or">or type it</span></div>
+
         <label class="field"><span data-i18n="k.code">Redemption code</span>
           <input type="text" id="barCode" class="codein" maxlength="5" autocomplete="off"
+                 inputmode="text" autocapitalize="characters" enterkeyhint="go"
                  spellcheck="false" placeholder="7K2QM"></label>
         <button class="btn btn-primary" id="barCheck" data-i18n="k.check">Check code</button>
         <div id="barResult"></div>
-        <p class="muted small">Scanning the player's QR with the camera opens this screen with the code already filled.</p>
+        <p class="muted small" id="scanNote"></p>
+      </div>
+
+      <div class="card" id="queueCard" hidden>
+        <div class="card-hd"><h3 data-i18n="k.waiting">Waiting at the bar</h3><span class="chip sea" id="queueCount">0</span></div>
+        <div class="queue" id="queue"></div>
       </div>
     </section>
 
@@ -306,6 +339,7 @@
 <script src="assets/i18n.js"></script>
 <script src="assets/qr.js"></script>
 <script src="assets/site.js"></script>
+<script src="assets/scan.js"></script>
 <script src="assets/figure.js"></script>
 <script src="assets/app.js"></script>
 </body>

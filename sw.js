@@ -1,10 +1,10 @@
 /* R2PRO service worker. App shell cached so the courtside wifi stops mattering. */
-var CACHE = "r2pro-v3";
+var CACHE = "r2pro-v4";
 var SHELL = [
   "./", "index.html", "app.html", "academies.html", "programs.html",
   "coaches.html", "pricing.html", "404.html", "manifest.webmanifest",
   "assets/styles.css", "assets/data.js", "assets/store.js", "assets/i18n.js",
-  "assets/qr.js", "assets/site.js", "assets/figure.js", "assets/app.js",
+  "assets/qr.js", "assets/scan.js", "assets/site.js", "assets/figure.js", "assets/app.js",
   "assets/icon.svg", "assets/icon-192.png", "assets/icon-512.png"
 ];
 
